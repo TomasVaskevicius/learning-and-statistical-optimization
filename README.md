@@ -16,10 +16,10 @@ Week  | Speaker | Title
 ----- | ------- | ------
 2 | Dominic Richards |
 3 | Tomas Vaskevicius | Fast Rates for Sparse Regression
-4 | Valentin De Bortoli | A Non-asymptotic Analysis of SGLD
+4 | Valentin De Bortoli |
 5 | Fan Wu |
 6 | Carlo Alfano | 
-7 | Tyler Farghly |
+7 | Tyler Farghly | A Non-asymptotic Analysis of SGLD
 
 ## Instructions for the Speakers
 
