@@ -15,11 +15,12 @@ We will hold hybrid sessions (as we do with classes), so that people can attend/
 Week  | Speaker | Title
 ----- | ------- | ------
 2 | Dominic Richards |
-3 | Tomas Vaskevicius | Fast Rates for Sparse Regression [(paper)](https://arxiv.org/pdf/1402.1918.pdf)
+3 | --- | ---
 4 | Valentin De Bortoli |
 5 | Fan Wu |
 6 | Carlo Alfano |
 7 | Tyler Farghly | A Non-asymptotic Analysis of SGLD
+8 | Tomas Vaskevicius | Fast Rates for Sparse Regression [(paper)](https://arxiv.org/pdf/1402.1918.pdf)
 
 ## Instructions for the Speakers
 
