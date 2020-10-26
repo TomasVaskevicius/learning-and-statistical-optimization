@@ -16,7 +16,7 @@ Week  | Speaker | Title
 ----- | ------- | ------
 2 | Dominic Richards |
 3 | --- | ---
-4 | Valentin De Bortoli |
+4 | Valentin De Bortoli | Quantitative Propagation of Chaos for SGD in Wide Neural Networks [(paper)](https://arxiv.org/abs/2007.06352)
 5 | Fan Wu |
 6 | Carlo Alfano |
 7 | Tyler Farghly | A Non-asymptotic Analysis of SGLD
