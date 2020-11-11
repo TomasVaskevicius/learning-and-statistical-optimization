@@ -1,0 +1,412 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsthm}         % typesetting theorems
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amssymb}        % definitions of mathematical symbols
+\usepackage{mathtools}      % useful tools for mathematical typesetting
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{subfiles}       % loading tex files
+\usepackage{bbold}          % for \mathbb{1} to work
+\usepackage{xcolor}         % enable coloured text
+\usepackage{subcaption}     % for side by side figures
+\usepackage{bm}             % for bold math symbols
+\usepackage[left=3cm, right=3cm, bottom=4cm]{geometry} % Setting the margins.
+\usepackage[parfill]{parskip}
+\usepackage[round]{natbib}
+\usepackage{titling}        % for moving title around.
+\usepackage{graphicx}
+\usepackage[outdir=./]{epstopdf} % For converting eps-to-pdf in correct directory.
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+
+%----------------------------------- Colors -----------------------------------
+%------------------------------------------------------------------------------
+\definecolor{myred}{HTML}{880000}
+\definecolor{mygreen}{HTML}{008800}
+\definecolor{myblue}{HTML}{000088}
+\definecolor{linkblue}{HTML}{0000BB}
+
+%---------------------------- Colors of Hyperlinks ----------------------------
+%------------------------------------------------------------------------------
+\hypersetup{
+  colorlinks,
+  linkcolor={myred},
+  citecolor={myblue},
+  urlcolor={linkblue}
+}
+
+%---------------------------- For inkscape-figures ----------------------------
+%------------------------------------------------------------------------------
+\usepackage{import}
+\usepackage{pdfpages}
+\usepackage{transparent}
+\newcommand{\incfig}[1]{%
+  \def\svgwidth{\columnwidth}
+  \import{./figures/}{#1.pdf_tex}
+}
+\pdfsuppresswarningpagegroup=1
+
+
+% Fix amsthm incompatibility with \usepackage[parfill]{parskip}, see:
+% https://tex.stackexchange.com/questions/25346/wrong-spacing-before-theorem-environment-amsthm/26350
+\begingroup
+\makeatletter
+\@for\theoremstyle:=definition,remark,plain\do{%
+  \expandafter\g@addto@macro\csname
+  th@\theoremstyle\endcsname{%
+    \addtolength\thm@preskip\parskip
+  }%
+}
+\endgroup
+
+
+\newtheorem{theorem}{Theorem}[subsection]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}{Remark}
+\newtheorem{proposition}{Proposition}
+\newtheorem{question}{Question}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{problem}{Problem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{assumption}[theorem]{Assumption}
+%------------------------------- My Definitions -------------------------------
+%------------------------------------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\B}{\mathbb{B}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\U}{\mathbf{U}}
+\newcommand{\V}{\mathbf{V}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\Eins}{\mathrm{\textbf{1}}}
+\newcommand{\gauss}{\mathcal{N}}
+\renewcommand{\O}{\mathcal{O}}
+\renewcommand{\P}{\mathbb{P}}
+
+%----------------------------------- Title ------------------------------------
+%------------------------------------------------------------------------------
+
+%\setlength{\droptitle}{-5em}
+\title{Notes on ``Minimax Rates of Estimation for Sparse PCA in High Dimensions''}
+\author{Fan Wu}
+
+\begin{document}
+
+\maketitle
+ 
+In these notes we review the paper ``Minimax Rates of Estimation for Sparse PCA in High Dimensions'' \citep{VL12}, which studies the problem of sparse principal component analysis (PCA) in the high-dimensional setting, where the number of variables $p$ can be (much) larger than the number of observations $n$, and establishes non-asympototic on the minimax bounds on the estimation error for the leading eigenvector, which is assumed to belong to an $\ell_q$ ball for a $q\in [0,1]$. Note that the case $q=0$ corresponds to exact sparsity. Before we begin, we give a brief, non-exhaustive introduction to sparse PCA.
+
+\section{Introduction}
+\subsection{Principal component analysis}
+A good overview of both methodology and theory on sparse PCA is given in \citep{ZX18}. Let $\X\in \R^{n\times p}$ be a given data matrix, and assume for simplicity that its columns all have mean zero, so that the empirical covariance matrix is given by $\hat{\Sigma} = \frac{1}{n}\X^T\X$. The first principal component can be defined as $Z_1 = \sum_{j=1}^p\alpha_{1j}X_j$, where $X_j$ denotes the $j$th row of the data matrix $\X$, and $\alpha_1 = (\alpha_{11},\dots, \alpha_{1,p})^T$ maximizes the variance of $Z_1$, that is
+\begin{equation}\label{eq:varmax_first}
+\alpha_1 = \operatorname{arg}\max_\alpha\alpha^T\hat{\Sigma}\alpha \quad \text{subject to } \|\alpha\|_2=1.
+\end{equation}
+The subsequent principal components can be defined sequentially by
+\begin{equation}\label{eq:varmax}
+\alpha_k = \operatorname{arg}\max_\alpha\alpha^T\hat{\Sigma}\alpha \quad \text{subject to } \|\alpha\|_2=1, \alpha^T\alpha_l = 0 \text{ for all } l<k.
+\end{equation}
+This definition means that the principal components can be obtained from the singular value decomposition (SVD) of the data matrix $\X$. Let
+\begin{equation*}
+\X = \mathbf{UDV}^T,
+\end{equation*}
+where $\mathbf{D}\in \R^{p\times p}$ is a diagonal matrix and $\mathbf{U}\in \R^{n\times p}$ and $\mathbf{V}\in \R^{p\times p}$ are orthonormal matrices. We can assume that the diagonal elements $d_1,\dots,d_p$ of $\mathbf{D}$ are in descending order. Since the columns of $\mathbf{V}$ are the eigenvectors of $\hat{\Sigma}$, we see from $\X\mathbf{V} = \mathbf{UD}$ that the principal components are given by $Z_k = U_kd_k$, where $U_k$ is the $k$th column of $\mathbf{U}$.
+
+Geometrically, PCA corresponds to the best low-rank approximation of the observed data. Writing $\V_k = [V_1|\dots|V_k]\in \R^{p\times k}$ for the first $k$ principal components, the projection onto their span is given by the projection operator $\mathbf{P}_k = \V_k\V_k^T$. Equivalently, the first $k$ principal components can be obtained by solving the minimization problem
+\begin{equation*}
+\min_{\V_k}\sum_{i=1}^n\|\x_i - \V_k\V_k^T\x_i\|_2^2.
+\end{equation*}
+
+\subsection{Sparse PCA}
+Each principal component is a linear combination of \emph{all} $p$ variables, which can be undesirable in terms of interpretability. Further, in the high-dimensional limit, the PCA has been shown to be inconsistent, see e.g.\ \citep{BS06}. More precisely, assuming that the $X_i\in\R^p$ are drawn independently from some probability distribution with covariance matrix $\Sigma$, and $n\rightarrow \infty$ with $\frac{p}{n}\rightarrow c>0$, then, we have under some fairly general regularity conditions,
+\begin{equation*}
+\P[\lim_{n\rightarrow \infty}|\mathbf{v}_1^T\hat{\mathbf{v}}_1|=0]=1,
+\end{equation*}   
+that is the leading eigenvector $\mathbf{v}_1$ of the population covariance matrix $\Sigma$ and the leading eigenvector $\hat{\mathbf{v}}_1$ of the sample covariance matrix $\Sigma$ are almost surely asymptotically orthogonal. 
+
+Motivated by these shortcomings of PCA, sparse variants of PCA have attracted much attention. 
+Inspired by the Lasso for sparse linear regression, \cite{JTU03} proposed to solve the variance maximization problem (\ref{eq:varmax}) under an additional $\ell_1$ constraint on the loading vectors,
+\begin{equation*}
+\alpha_k = \operatorname{arg}\max_\alpha\alpha^T\hat{\Sigma}\alpha \quad \text{subject to } \|\alpha\|_2=1, \alpha^T\alpha_l = 0 \text{ for all } l<k, \|\alpha\|_1\le t,
+\end{equation*}
+for some tuning parameter $t>0$. Subsequently, many other approaches have been proposed, including an elastic net formulation, a semidefnite programming approach and iterative thresholding methods; see \citep{ZX18} for more details.
+
+\section{``Minimax Rates of Estimation for Sparse PCA in High Dimensions''}
+The paper \citep{VL12} considers the problem of estimating the first principal component. This was later generalized to estimating the subspace spanned by the first $k$ principal components \citep{VL13}.
+
+\subsection{Setting}
+Assume that the random vectors $X_i\in\R^p$ are independent and from the same distribution with covariance matrix $\Sigma = \E[X_iX_i^T] - (\E[X_i])(\E[X_i])^T$. For the minimax framework, we need to define the parameter space and loss function under consideration.
+
+\textbf{Parameter space.} For $\lambda_1 > \lambda_2\ge 0$, assume that the population covariance matrix is given by
+\begin{equation}\label{eq:covmat}
+\Sigma = \lambda_1\theta_1\theta_1^T + \lambda_2\Sigma_0,
+\end{equation}
+where $\theta_1\in \mathbb{S}_2^{p-1}$, the unit sphere of $\ell_2$, and $\Sigma_0\in \R^{p\times p}$ is a symmetric matrix satisfying $\Sigma_0\preceq 0$, $\Sigma_0\theta_1 = 0$, and $\|\Sigma_0\|_2 = 1$. The last assumption, together with $\lambda_1>\lambda_2$, implies that the covariance matrix $\Sigma$ has a unique largest eigenvalue $\lambda_1$.
+
+The \textbf{sparsity constraint} is modeled by assuming 
+\begin{equation*}
+\theta_1\in \B^p_q(R_q) ) \{\theta\in \R^p: \sum_{j=1}^p |\theta_j|^q\le R_q\}
+\end{equation*}
+for a $q\in [0,1]$, where we use the convention $0^0=0$. The case $q=0$ corresponds to ``hard'' sparsity, i.e.\ $\theta$ can have at most $R_0$ non-zero entries, while $q>0$ corresponds to ``soft'' sparsity, where only a few of the entries of $\theta$ are allowed to be large, while the majority are small.
+
+Throughout these notes, we consider the class 
+\begin{equation*}
+\mathcal{M}_q (\lambda_1, \lambda_2, \bar R_q, \alpha, \kappa),
+\end{equation*}
+which consists of all probability distributions on $X_i$ with covariance matrix satisfying (\ref{eq:covmat}) with $\theta_1\in \B^p_q(\bar R_q + 1)$ and Assumption \ref{assumption} below, where $\alpha$ and $\kappa$ only depend on $q$.
+
+\textbf{Loss function.} When estimating the leading eigenvector, we have a sign ambiguity, in the sense that we could either estimate $\theta_1$ or $-\theta_1$. More generally, if we were considering estimating the subspace spanned by the first $k$ principal components, say, $\Theta$, then $\Theta$ is only unique up to orthogonal transformation, as $\Theta$ and $\Theta V$ span the same subspace for any orthogonal $k\times k$ matrix $V$. However, the projection $\Pi = \Theta\Theta^T$ is unique, and hence it makes sense to consider the loss function defined by 
+\begin{equation*}
+\|\widehat{\Pi} - \Pi\|_F.
+\end{equation*}
+In our case we have $k=1$ and only an sign ambiguity. Still, we consider the same loss function
+\begin{equation*}
+\|\hat{\theta}_1\hat\theta_1^T - \theta\theta^T\|_F.
+\end{equation*}
+
+With these definitions in place, the goal is to establish non-asymptotic bounds on the minimax error
+\begin{equation*}
+\min_{\hat{\theta}_1}\max_{P\in \mathcal{M}_q(\lambda_1,\lambda_2, \bar R_q, \alpha, \kappa)} \E_P\left[\|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F\right],
+\end{equation*} 
+where the minimum is taken over all estimators that only depend on the data $X_1,\dots,X_n$.
+
+\subsection{Minimax rate - lower bound}
+Define the quantity
+\begin{equation*}
+\sigma^2 = \frac{\lambda_1\lambda_2}{(\lambda_1 - \lambda_2)^2}.
+\end{equation*}
+Intuitively, $\sigma^2$ relates to the gap between the first two eigenvalues and corresponds to the effective noise-to-signal ratio. The following assumption on $\bar R_q$ ensures that the eigenvector $\theta_1$ is not too dense. 
+\begin{assumption}\label{assumption}
+There exists a constant $\alpha\in (0,1]$ that depends only on $q$ satisfying 
+\begin{equation}\label{eq:ass1}
+\bar R_q \le \kappa^q(p-1)^{1-\alpha} \bar R_q^{\frac{2\alpha}{2-q}}\left[\frac{\sigma^2}{n}\log \frac{p-1}{\bar R_q^{\frac{2}{2-q}}}\right]^{\frac{q}{2}},
+\end{equation}
+where $\kappa\le c\alpha/16$ is a constant that only depends on $q$, and 
+\begin{equation}\label{eq:ass2}
+1\le \bar R_q \le e^{-1}(p-1)^{1-q/2}.
+\end{equation}
+\end{assumption}
+Assumption \ref{assumption} also ensures that the effective noise-to-signal ratio $\sigma^2$ is not too small. Consider the extreme case where $\lambda_2=0$. Then, we have $\sigma^2=0$, the covariance matrix $\Sigma$ from (\ref{eq:covmat}) becomes a symmetric rank one matrix, and the distribution of $X_i$ lies in a one-dimensional subspace. The relationship between the parameters $n, p, \bar R_q$ and $\sigma^2$ required by Assumption \ref{assumption} describes a regime in which the problem is neither impossible nor trivially easy.
+
+Note that in the case $q=0$, Assumption \ref{assumption} simplifies, as (\ref{eq:ass1}) is satisfied for $\alpha=1$, and we only require 
+\begin{equation*}
+1\le \bar R_0 \le e^{-1}(p-1).
+\end{equation*}
+
+The following Theorem establishes a lower bound on the minimax estimation error.
+\begin{theorem}\label{theorem1} (Lower bound for sparse PCA)
+Let $q\in [0,1]$. If Assumption \ref{assumption} holds, then there exists a constant $c>0$ that only depends on $q$, such that every estimator $\hat\theta_1$ satisfies
+\begin{equation}
+\max_{P\in \mathcal{M}_q(\lambda_1, \lambda_2, \bar R_q, \alpha, \kappa)} \E_P\left[\|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F\right] \ge c\min\left\{1, \bar R_q\left[\frac{\sigma^2}{n}\log \Big((p-1)/\bar R_q^{\frac{2}{2-q}}\Big)\right]^{1 - \frac{q}{2}}\right\}^{\frac{1}{2}}
+\end{equation}
+\end{theorem} 
+This bound is easiest to interpret in the case $q=0$, where $R_0$ corresponds to the number of active variables. Then, the bound becomes (up to constants)
+\begin{equation*}
+\min\left\{1, R_0\frac{\sigma^2}{n}\log \frac{p}{R_0}\right\}^{\frac{1}{2}}.
+\end{equation*}
+Here, the $1$ means that the error cannot exceed one, as the distance $\|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F$ is related to the sign of the angle between $\hat\theta_1$ and $\theta_1$, which cannot exceed 1. The term $R_0\frac{\sigma^2}{n}$ is the error if the support of $\theta_1$ was known, and we were able to do PCA just on the support. The term $\log \frac{p}{R_0}$ is the error due to the subset selection we need to do. Note that this bound matches the lower bound for sparse linear regression (with the effective noise level $\sigma^2$ defined as above), which means that the sparse PCA problem of estimating the first principal component is statistically as hard as sparse linear regression. 
+
+\subsection{Minimax rate - upper bound}
+The idea to establishing the upper bound on the minimax rate consists of analyzing the following $\ell_q$-constrained maximization problem,
+\begin{equation}\label{eq:lqmax}
+\max_{b} b^TSb \quad \text{subject to } b\in\mathbb{S}^{p-1}_2\cap \B^p_q(\rho_q),
+\end{equation}
+where we write $S = \frac{1}{n}\sum_{i=1}^n X_iX_i^T$ for the sample covariance matrix (recall that we assumed the columns of $\X$ to be zero mean, that is $\bar\X\bar\X^T=\mathbf{0}$). Note that the feasible set is non-empty if $\rho_q\ge 1$, and the $\ell_q$ constraint is active only when $\rho_q\le p^{1-\frac{q}{2}}$. For $q=2$ and $\rho_q=1$, we recover the standard PCA. 
+The case $q=1$ corresponds to the Lasso estimator and coincides with the method proposed in \citep{JTU03}.
+
+To analyze the solution to the maximization problem (\ref{eq:lqmax}), we need to assume that the tails of the distribution of the data vector are sub-Gaussian, which can be described in terms of the Orlicz $\psi_\alpha$-norm.
+\begin{definition}
+For a random variable $Y\in\R$, the Orlicz $\psi_\alpha$-norm for $\alpha\ge 1$ is defined as
+\begin{equation*}
+\|Y\|_{\psi_\alpha} = \inf\{c>0: \E[\exp(|Y/c|^\alpha)]\le 2\}.
+\end{equation*}
+\end{definition}
+If a random variable has finite $\psi_\alpha$-norm, then its tails are bounded by $\exp(-Cx^\alpha)$. In particular, the case $\alpha=2$ corresponds to sub-Gaussian random variables. 
+\begin{assumption}\label{assumption2}
+There exist i.i.d.\ random vectors $Z_1,\dots,Z_n\in\R^p$ such that $\E[Z_i] = \mathbf{0}$, $\E[Z_iZ_i^T] = \mathbf{I}_p$,
+\begin{equation*}
+X_i = \Sigma^\frac{1}{2}Z_i, \quad \text{and}\quad \sup_{x\in \mathbb{S}^{p-1}_2}\|\langle Z_i, x\rangle\|_{\psi_2}\le K,
+\end{equation*} 
+for a constant $K>0$.
+\end{assumption}
+Under this assumption, the following upper bound holds. 
+\begin{theorem}\label{theorem2}(Upper bound for sparse PCA) Let $\hat\theta_1$ be the solution to the $\ell_q$-constrained maximization problem (\ref{eq:lqmax}) with $\rho_q = R_q := \bar R_q+1$, and let $\tilde{\sigma} = \frac{\lambda_1}{\lambda_1 - \lambda_2}$. If the distribution of $(X_1,\dots,X_n)$ belongs to $\mathcal{M}_q(\lambda_1, \lambda_2, \bar R_q, \alpha, \kappa)$ and satisfies Assumptions \ref{assumption} and \ref{assumption2}, then there exists a constant $c>0$ that only depends on $K$ such that the following holds:
+\begin{enumerate}
+\item If $q\in (0,1)$, then 
+\begin{equation*}
+\E\left[\|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F^2\right] \le c\min\left\{ 1, R_q^2 \left[\frac{\tilde\sigma^2}{n}\log p\right]^{1-\frac{q}{2}}\right\}.
+\end{equation*}
+
+\item If $q=1$, then 
+\begin{equation*}
+\E\left[\|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F^2\right] \le c\min\left\{ 1, R_1 \left[\frac{\tilde\sigma^2}{n}\log \frac{p}{R_1^2}\right]^{1-\frac{q}{2}}\right\}.
+\end{equation*}
+
+\item If $q=0$, then 
+\begin{equation*}
+\E\left[\|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F\right]^2 \le c\min\left\{ 1, R_0 \frac{\tilde\sigma^2}{n}\log \frac{p}{R_0}\right\}.
+\end{equation*}
+\end{enumerate}
+\end{theorem}
+The reason for the different bounds depending on $q$ are the different tools available for controlling empirical processes in $\ell_q$ balls.
+
+Comparing the bounds of Theorems \ref{theorem1} and \ref{theorem2} in the case $q=0$, we see that the bounds agree up to a factor $\sqrt{\lambda_2/\lambda_1}$. In the cases $q\in (0,1)$ and $q=1$, an upper bound for the squared error can be obtained using the inequality $\E[Y^2]\ge \E[Y]^2$. Thus, both bounds have the same dependence on $p$ and $n$ for all $q\in [0,1]$, which shows that the bounds are sharp in terms of $p$ and $n$.
+
+\section{Proofs}
+\label{section:proofs}
+In this section, we present the proofs of Theorems \ref{theorem1} and \ref{theorem2}. We will state supporting Lemmas from \citep{VL12} without proof. We will write $\langle A, B\rangle = \operatorname{Tr}(A^TB)$ for matrices $A$ and $B$ with compatible dimensions, so that $\|A\|_F^2 = \langle A, A\rangle$. For probability measures $\P_1$ and $\P_2$, we consider the Kullback-Leibler divergence 
+\begin{equation*}
+D(\P_1\|\P_2) = \int \log \left(\frac{d\P_1}{d\P_2}\right)d\P_1.
+\end{equation*}
+
+\subsection{Proof of Theorem \ref{theorem1}}
+The main idea to prove Theorem \ref{theorem1} is to convert the problem from estimation to testing by discretizing the parameter space, and then to apply Fano's inequality (Lemma \ref{lemma311} below). Then, we need to find a sufficiently large finite subset of the parameter space, such that the parameters are $\alpha$-separated under the loss function, but close under the KL divergence of the corresponding probability measures. We will provide the main ingredients and lemmas used, but we will omit the details of the calculations. 
+
+\begin{lemma}\label{lemma311} (Generalized Fano method) Let $N\ge 1$ be an integer and $\theta_1,\dots,\theta_N\subset\Theta$ index a collecion of probability measures $\P_{\theta_i}$ on a measurable space $(\mathcal{X}, \mathcal{A})$. Let $d$ be a pseudometric on $\Theta$ and assume that, for all $i\neq j$,
+\begin{equation*}
+d(\theta_i, \theta_j) \ge \alpha_N \quad \text{and} \quad D(\P_{\theta_i}\|\P_{\theta_j}) \le \beta_N.
+\end{equation*}
+Then, every $\mathcal{A}$-measurable estimator $\hat\theta$ satisfies
+\begin{equation*}
+\max_i \E_{\theta_i}[d(\hat\theta,\theta_i)] \ge \frac{\alpha_N}{2}\left(1 - \frac{\beta_N + \log 2}{\log N}\right).
+\end{equation*}
+\end{lemma}
+The subset of the parameter space which is $\alpha$-separated under the loss function but close under the KL divergence is given by the following lemma.
+\begin{lemma}\label{lemma312}(Local packing set) Let $\bar R_q = R_q-1\ge 1$ and $p\ge 5$. There exists a finite subset $\Theta_\epsilon\subset \mathbb{S}^{p-1}_2\cap \B^p_q(R_q)$ and a universal constant $c>0$ such that each pair $\theta_1\neq\theta_2\in\Theta_\epsilon$ satisfies
+\begin{equation*}
+\frac{\epsilon}{\sqrt{2}}<\|\theta_1 - \theta_2\|_2\le \sqrt{2}\epsilon \quad \text{and}\quad \log|\Theta_\epsilon| \ge \left(\frac{\bar R_q}{\epsilon^q}\right)^{\frac{2}{2-q}}\left[\log (p-1) - \log \left(\frac{\bar R_q}{\epsilon^q}\right)^{\frac{2}{2-q}}\right].
+\end{equation*}
+\end{lemma}
+
+By Lemma A.1.2 of \citep{VL12}, the first bound in Lemma \ref{lemma312} implies 
+\begin{equation*}
+\frac{\epsilon^2}{2} \le \|\theta_1\theta_1^T - \theta_2\theta_2^T\|_F^2 \le 4\epsilon^2.
+\end{equation*}
+For each $\theta\in\Theta_\epsilon$, we consider the matrix
+\begin{equation*}
+\Sigma_{\theta} = (\lambda_1 - \lambda_2)\theta\theta^T + \lambda_2\mathbf{I}_p.
+\end{equation*}
+Then, we consider probability distributions $\P_\theta$ defined as the n-fold product of $\gauss(\mathbf{0}, \Sigma_\theta)$, and bound the KL divergence with the following lemma.
+\begin{lemma}\label{lemma313}
+Let $x_1,x_2\in \mathbb{S}^{p-1}_2$, $\lambda_1>\lambda_2>0$,
+\begin{equation*}
+\Sigma_i = (\lambda_1 - \lambda_2) x_ix_i^T + \lambda_2\mathbf{I}_p, \quad i=1,2,
+\end{equation*}
+and $\P_i$ be the n-fold product of $\gauss(\mathbf{0}, \Sigma_i)$. Then, for $\sigma^2 = \lambda_1\lambda_2/(\lambda_1-\lambda_2)^2$,
+\begin{equation*}
+D(\P_1\|\P_2) = \frac{n}{2\sigma^2}\|x_1x_1^T-x_2x_2^T\|_F^2.
+\end{equation*}
+\end{lemma}
+With Lemma \ref{lemma313}, we can upper-bound 
+\begin{equation*}
+D(\P_{\theta_1}\|\P_{\theta_2}) = \frac{n}{2\sigma^2}\|\theta_1\theta_1^T - \theta_2\theta_2^T\|_F^2\le \frac{2n\epsilon^2}{\sigma^2},
+\end{equation*}
+and Lemma \ref{lemma311} implies
+\begin{equation*}
+\max_{\theta\in\Theta_\epsilon} \E_{\theta}\left[\|\hat\theta\hat\theta^T - \theta\theta^T\|_F\right] \ge \frac{\epsilon}{2\sqrt{2}}\left(1 - \frac{2n\epsilon^2/\sigma^2 + \log 2}{\log |\Theta_\epsilon|}\right).
+\end{equation*}
+Finally, Theorem \ref{theorem1} follows from choosing $\epsilon$ on the correct order, which relies crucially on Assumption \ref{assumption} and can be shown in a somewhat lengthy calculation, see \citep{VL12}. 
+
+\subsection{Proof of Theorem \ref{theorem2}}
+\begin{lemma}\label{lemma321}
+Let $\theta\in \mathbb{S}^{p-1}_2$. If $\Sigma \preceq 0$ as a unique largest eigenvalue $\lambda_1$ with eigenvector $\theta_1$, then 
+\begin{equation*}
+\frac{1}{2}(\lambda_1 - \lambda_2)\|\theta\theta^T - \theta_1\theta_1^T\|_F^2 \le \langle \Sigma, \theta_1\theta_1^T - \theta\theta^T\rangle. 
+\end{equation*}
+\end{lemma}
+Now consider the solution to the maximization problem (\ref{eq:lqmax}) $\hat\theta_1$. Let $\epsilon = \|\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\|_F$ denote the estimation error to be bounded. By Lemma \ref{lemma321}, we can bound
+\begin{align}
+\frac{1}{2}(\lambda_1 - \lambda_2)\epsilon^2 &\le \langle S, \theta_1\theta_1^T\rangle - \langle \Sigma, \hat\theta_1\hat\theta_1^T\rangle - \langle S - \Sigma, \theta_1\theta_1^T\rangle \nonumber\\
+&\le \langle S-\Sigma, \hat\theta_1\hat\theta_1^T\rangle - \langle S_\Sigma, \theta_1\theta_1^T\rangle \nonumber\\
+&= \langle S-\Sigma , \hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\rangle. \label{eq18}
+\end{align}
+We consider the three cases $q\in (0,1)$, $q=1$ and $q=0$.
+
+\textbf{Case 1: $q\in (0,1)$}. By H\"{o}lder's inequality, we can rearrange (\ref{eq18}) to 
+\begin{equation*}
+\frac{1}{2}\epsilon^2 \le \frac{\|\operatorname{vec}(S-\Sigma)\|_\infty}{\lambda_1 - \lambda_2}\|\operatorname{vec}(\theta_1\theta_1^T - \hat\theta_1\hat\theta_1^T)\|_1,
+\end{equation*}
+where $\operatorname{vec}(A)\in\R^{p^2}$ denotes the vectorized form of a matrix $A\in\R^{p\times p}$. Since we have $\theta_1, \hat\theta_1\in \B^p_q(R_q)$, we can use a truncation trick (see e.g.\ Lemma 5 of \cite{RWY11}) to bound, for any $t>0$,
+\begin{align*}
+\|\operatorname{vec}(\theta_1\theta_1^T - \hat\theta_1\hat\theta_1^T)\|_1 &\le \sqrt{2} R_q \|\operatorname{vec}(\theta_1\theta_1^T - \hat\theta_1\hat\theta_1^T)\|_2t^{-q/2} + 2 R_q^2t^{1-q} \\
+&= \sqrt{2}R_q\epsilon t^{-q/2} + 2R_q^2t^{1-q}.
+\end{align*}
+Choosing $t = \|\operatorname{vec}(S-\Sigma)\|_\infty/(\lambda_1 - \lambda_2)$, we have
+\begin{equation*}
+\frac{1}{2}\epsilon^2 \le \sqrt{2}t^{1-q/2}R_q\epsilon + 2t^{2-q}R_q^2.
+\end{equation*}
+Define $m$ implicitly via $\epsilon = m\sqrt{2}t^{1-q/s}R_q$. Then, above inequality becomes $m^2/2 \le m+1$, which means that we must have $m<3$. Hence, we have
+\begin{equation*}
+\epsilon \le 3\sqrt{2}t^{1-q/2}R_q = 3\sqrt{2}R_q \left(\frac{\|\operatorname{vec}(S-\Sigma)\|_\infty}{\lambda_1 - \lambda_2}\right)^{1-q/2}.
+\end{equation*}
+The next lemma allows us to bound the quantity $\|\operatorname{vec}(S-\Sigma)\|_\infty$.
+
+\begin{lemma}\label{lemma322}
+If Assumption \ref{assumption2} holds and $\Sigma = \sum_{j=1}^p\lambda_j\theta_j\theta_j^T$ where $\lambda_1\ge \dots \ge \lambda_p \ge 0$, then there is a universal constant $c>0$ such that
+\begin{equation*}
+\big\| \|\operatorname{vec}(S-\Sigma)\|_\infty\big\|_{\psi_1}\le cK^2\lambda_1\max\left\{\sqrt{\frac{\log p}{n}}, \frac{\log p}{n}\right\}
+\end{equation*}
+\end{lemma}
+Using Lemma \ref{lemma322}, we can bound
+\begin{equation*}
+\|\epsilon^{2/(2-q)}\|_{\psi_1} \le cK^2 R_q^{2/(2-q)} \tilde\sigma \max\left\{\sqrt{\frac{\log p}{n}}, \frac{\log p}{n}\right\}.
+\end{equation*}
+A straightforward computation shows that $\E[|X|^m] \le (m!)^m\|X\|_{\psi_1}^m$ for $m\ge 1$ (consider the 0th and $m$th terms of the series expansion of $e^x$). With this, we have
+\begin{equation*}
+\E[\epsilon^2]\le c_KR_q^2\tilde\sigma^{2-q}\max\left\{\sqrt{\frac{\log p}{n}}, \frac{\log p}{n}\right\}^{2-q} =: \mathbf{M},
+\end{equation*}
+so that, together with $\epsilon\le 2$, we get
+\begin{equation*}
+\E[\epsilon^2]\le \min\{2, \mathbf{M}\}.
+\end{equation*}
+The proof for the case $q\in (0,1)$ is completed by the fact that we only need to consider the squareroot term for $\log p <n$. If $\log p> n$, then we have $\E[\epsilon^2]\le 2$.
+
+\textbf{Case 2: $q=1$.} 
+In this case, $\theta_1,\hat\theta_1\in\B^p_1(R_1)$ and we apply the triangle inequality to (\ref{eq18}).
+\begin{align*}
+\frac{1}{2}(\lambda_1 - \lambda_2)\epsilon^2 &\le \langle S-\Sigma, \hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\rangle \\
+&\le |\hat\theta^T(S-\Sigma)\hat\theta_1| + |\theta_1^T(S-\Sigma)\theta_1| \\
+&\le 2 \sup_{b\in \mathbb{S}^{p-1}_2\cap \B^p_1(R_1)} |b^T(S-\Sigma)b|
+\end{align*}
+This supremum is bounded in the following lemma.
+\begin{lemma}\label{lemma323}
+If Assumption \ref{assumption2} holds and $\Sigma = \sum_{j=1}^p\lambda_j\theta_j\theta_j^T$ where $\lambda_1\ge \dots \ge \lambda_p \ge 0$, then there is a universal constant $c>0$ such that, for all $R_1^2\in [1, p/e]$,
+\begin{equation*}
+\E\left[\sup_{b\in \mathbb{S}^{p-1}_2\cap \B^p_1(R_1)} |b^T(S-\Sigma)b|\right] \le c\lambda_1 K^2\max\left\{ R_1\sqrt{\frac{\log(p/R_q^2)}{n}}, R_1^2\frac{\log(p/R_q^2)}{n}\right\}
+\end{equation*}
+\end{lemma}
+Assumption \ref{assumption} guarantees that $R_1^2\in [1, p/e]$, and Lemma \ref{lemma323} completes the proof as in the previous case. 
+
+\textbf{Case 3: $q=0$.} 
+In this case, $\theta_1,\hat\theta_1\in\B^p_0(R_0)$, so $\theta_1 - \hat\theta_1\in \B^p_0(2R_0)$. Denote by $\Pi$ the projection matrix onto the union of the supports of $\theta_1$ and $\hat\theta_1$, that is $\Pi$ is a diagonal matrix with a diagonal entry equal 1 where $\theta_1$ or $\hat\theta_1$ are non-zero, and zero otherwise. Then, $\Pi\hat\theta_1 = \hat\theta_1$ and $\Pi\theta_1 = \theta_1$, and by the von Neumann trace inequality, we can bound
+\begin{align*}
+\frac{1}{2}(\lambda_1 - \lambda_2) \epsilon^2 &\le |\langle S-\Sigma, \Pi(\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T)\Pi\rangle| \\
+&=|\langle \Pi(S-\Sigma)\Pi, \hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T\rangle| \\
+&\le \sum_{j=1}^p\alpha_j\beta_j,
+\end{align*}
+where by $\alpha_j$ and $\beta_j$ we denote the singular values of the matrices $\Pi(S-\Sigma)\Pi$ and $\hat\theta_1\hat\theta_1^T - \theta_1\theta_1^T$ respectively, in descending order. By Lemma A.1.1 of \citep{VL12}, we can bound the sum of singular values $\sum_{j=1}^p\beta_j \le \sqrt{2}\epsilon$, so that
+\begin{align*}
+\frac{1}{2}(\lambda_1 - \lambda_2) \epsilon^2 &\le \|\Pi(S-\Sigma)\Pi\|_2\sqrt{2}\epsilon \le \sup_{b\in \mathbb{S}^{p-1}_2\cap \B^p_0(2R_0)} |b^T(S-\Sigma)b|\sqrt{2}\epsilon.
+\end{align*}
+Similar to the $q=1$ case, the following lemma concludes the proof.
+\begin{lemma}\label{lemma324}
+If Assumption \ref{assumption2} holds and $\Sigma = \sum_{j=1}^p\lambda_j\theta_j\theta_j^T$ where $\lambda_1\ge \dots \ge \lambda_p \ge 0$, then there is a universal constant $c>0$ such that, for all $R_1^2\in [1, p/e]$,
+\begin{equation*}
+\E\left[\sup_{b\in \mathbb{S}^{p-1}_2\cap \B^p_0(d)} |b^T(S-\Sigma)b|\right] \le c\lambda_1 K^2\max\left\{\sqrt{\frac{d}{n}\log\frac{p}{d}},\frac{d}{n}\log\frac{p}{d}\right\}
+\end{equation*}
+\end{lemma}
+%-------------------------------- Bibliography --------------------------------
+%------------------------------------------------------------------------------
+\bibliographystyle{abbrvnat}
+\bibliography{references}
+
+\end{document}
