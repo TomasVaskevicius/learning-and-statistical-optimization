@@ -18,7 +18,7 @@ Week  | Speaker | Title
 3 | --- | ---
 4 | Valentin De Bortoli | Quantitative Propagation of Chaos for SGD in Wide Neural Networks [(paper)](https://arxiv.org/abs/2007.06352)
 5 | Fan Wu | Minimax Rates of Estimation for Sparse PCA in High Dimensions [(paper)](https://arxiv.org/pdf/1202.0786.pdf)
-6 | Carlo Alfano |
+6 | Carlo Alfano | On the Theory of Policy Gradient Methods: Optimality, Approximation, and Distribution Shift [(paper)](https://arxiv.org/abs/1908.00261)
 7 | Tyler Farghly | A Non-asymptotic Analysis of SGLD
 8 | Tomas Vaskevicius | Fast Rates for Sparse Regression [(paper)](https://arxiv.org/pdf/1402.1918.pdf)
 
