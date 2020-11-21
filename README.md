@@ -22,6 +22,19 @@ Week  | Speaker | Title
 7 | Tyler Farghly | A Non-Asymptotic Analysis of Stochastic Gradient Langevin Dynamics [(paper)](https://arxiv.org/abs/1702.03849)
 8 | Tomas Vaskevicius | Fast Rates for Sparse Regression [(paper)](https://arxiv.org/pdf/1402.1918.pdf)
 
+## Schedule for Hilary Term
+
+Week  | Speaker | Title
+----- | ------- | ------
+2 | Amartya Sanyal |
+3 | Federico Cantarella |
+4 | Eugenio Clerico |
+5 | Eduard Oravkin |
+6 | David Martinez |
+7 | Riccardo Della Vecchia |
+8 | Jun Yang |
+
+
 ## Instructions for the Speakers
 
 Instead of whiteboard, we will be using graphical tablets. The speakers can either use their own equipments, or use the equipment available on the computer in the Social Area (Windows credentials are needed to log in). It is also fine to use slides, but ideally we should be using the whiteboard on Teams (or other methods). **The speakers should make sure to try the equipment beforehand.**
