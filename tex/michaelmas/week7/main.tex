@@ -1,0 +1,594 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{hyperref}
+\usepackage[title]{appendix}
+\usepackage{bbm}
+\usepackage[margin=1in]{geometry}
+\usepackage[numbers, square]{natbib}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{etoolbox}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+
+\AfterEndEnvironment{theorem}{\noindent\ignorespaces}
+\AfterEndEnvironment{proposition}{\noindent\ignorespaces}
+\AfterEndEnvironment{remark}{\noindent\ignorespaces}
+\AfterEndEnvironment{corollary}{\noindent\ignorespaces}
+\AfterEndEnvironment{lemma}{\noindent\ignorespaces}
+\AfterEndEnvironment{definition}{\noindent\ignorespaces}
+
+\makeatletter
+\def\namedlabel#1#2{\begingroup
+    #2%
+    \def\@currentlabel{#2}%
+    \label{#1}\endgroup
+}
+\makeatother
+
+\newcommand{\Bbf}[1]{\mathbf{#1}}
+\newcommand{\Bcal}[1]{\mathcal{#1}}
+\newcommand{\Brm}[1]{\mathrm{#1}}
+
+\title{A Non-Asymptotic Analysis of Stochastic Gradient Langevin Dynamics}
+\author{Tyler Farghly\\
+\href{mailto:tyler.farghly@stats.ox.ac.uk}{tyler.farghly@stats.ox.ac.uk}}
+\date{November 2020}
+
+\begin{document}
+
+\maketitle
+
+Stochastic Gradient Langevin Dynamics is a popular variant of Stochastic Gradient Descent where Gaussian noise is added at each iteration. This simple addition allows it to escape local minima and obtain impressive results for non-convex objectives. In these notes, we review ideas from the paper ``Non-Convex Learning via Stochastic Gradient Langevin Dynamics: A Nonasymptotic Analysis" \cite{Raginsky2017Non-ConvexAnalysis}. In this paper, \citeauthor{Raginsky2017Non-ConvexAnalysis} apply powerful tools from probability theory to obtain generalization bounds in the setting of non-convex learning.
+
+\section{Introduction}
+We begin by establishing some notation and introducing some basic concepts.
+
+\subsection{The Setting}
+Consider a standard prediction problem with the set of actions \(\Bbb{R}^d\) and examples \(\Bcal{Z}\) (for example it could be that \(\Bcal{Z} = \Bcal{X} \times \Bcal{Y}\) where \(\Bcal{X}\) and \(\Bcal{Y}\) are the sets of possible features and labels). Let \(f: \Bbb{R}^d \times \Bcal{Z} \to \Bbb{R}_+\) be a loss function, then given a distribution on the space \(\Bcal{Z}\) we define the \textit{risk}, \(r: \Bbb{R}^d \to \Bbb{R}_+\) where \(r(w) = \Bbb{E}_Z f(w, Z)\). The goal is to minimize \(r\) which is usually intractable and so we instead minimize the \textit{empirical risk}, \(R: \Bbb{R}^d \to \Bbb{R}_+\). Given a collection of \(n\) examples \(\Bbf{z} = (z_1, ..., z_n) \in \Bcal{Z}^n\), this is defined by
+\begin{equation*}
+    R(w) = \frac{1}{n} \sum_{i=1}^n f(w, z_i).
+\end{equation*}
+In the case that for each \(z \in \Bcal{Z}\), \(f(\cdot, z) \in C^1(\Bbb{R}^d)\), a popular approach to minimizing \(R\) is by using \textit{gradient descent methods}. Since \(n\) is usually large in the non-convex setting, we approximate the gradient \(\nabla R\) with a stochastic approximation resulting in the update:
+\begin{equation*}
+    W_{k+1} = W_k - \eta g_k(W_k),
+\end{equation*}
+where \(g_k\) forms a sequence of random variables, unbiased estimators for the function \(\nabla R\), and \(\eta > 0\) is the learning rate. In these notes we consider only the \textit{mini-batch} approximation, given by
+\begin{equation*}
+    g_k(w) = \frac{1}{n_m} \sum_{i \in U_k} f(w, z_i).
+\end{equation*}
+where for each \(k\), \(U_k\) is a uniform sample from the set \(\{U: U \subset [n], |U| = n_m\}\) and \(n_m > 0\) is the mini-batch size.
+
+\subsection{Stochastic Gradient Langevin Dynamics}
+Stochastic Gradient Langevin Dynamics (SGLD) is obtained from the above algorithm by simply adding appropriately scaled isotropic Gaussian noise to the update. The relevant update reads
+\begin{equation*}
+    W_{k+1} = W_k - \eta g(W_k, U_k) + \sqrt{2 \beta^{-1}} \xi_k,
+\end{equation*}
+where for each \(k\), \(\xi_k\) is independently and identically distributed according to \(\xi_k \sim N(0, I_d)\) and is independent from \((g_k)_{k \geq 0}\). Heuristically, it can be argued that this modification prevents the process from becoming stuck around local minima and so is a natural addition in the non-convex case. However, there is the antithesis that once \(W_k\) is near a minimizer of \(R\) the noise term could prevent it from properly converging.
+
+A more refined argument is given in \cite{Borkar1999AAlgorithms, Welling2011BayesianDynamics} where it is pointed out that if we take \(\eta\) to its infinitesimal limit the process \(W_k\) can be approximated by \(W(k\eta)\), where \(W(t)\) is the solution to the stochastic differential equation (SDE)
+\begin{equation}\label{eq:lang_sde}
+    dW(t) = - \nabla R(W(t)) dt + \sqrt{2\beta^{-1}} dB(t), \quad W(0) = W_0.
+\end{equation}
+Here \(B(t)\) is a standard \(d\)-dimensional Wiener process and is independent of \(W_0\). Equation (\ref{eq:lang_sde}) is the (overdamped) \textit{Langevin equation} or \textit{Smoluchowski SDE} \cite{Pavliotis2014StochasticApplications} and has been studied extensively. A central property is that if \(R\) is suitably regular we can guarantee that for a suitable measurable function \(\varphi: \Bbb{R}^d \to \Bbb{R}\),
+\begin{equation}\label{eq:gibbs_cvgt}
+    \Bbb{E}\varphi(W(t)) \to \hat{\pi}(\varphi), \text{ as } t \to \infty,
+\end{equation}
+where \(\hat{\pi}\) is the \textit{Gibbs measure} for the potential \(\beta R\):
+\begin{equation}\label{eq:gibbs}
+    \hat{\pi}(dw) = \frac{1}{\Lambda} e^{-\beta R(w)}dw, \quad \Lambda = \int_{\Bbb{R}^d} e^{-\beta R(w)} dw.
+\end{equation}
+Here and throughout the report, we use the notation \(\hat{\pi}(\varphi)\) to denote the integral of \(\varphi\) with respect to the measure \(\hat{\pi}\). This has great importance in the optimization setting since \(\hat{\pi}\) is concentrated around \(w\) where \(R(w)\) is small. Furthermore, if \(R\) has a single minimizer \(w^*\) it can be shown that as \(\beta \to \infty\), \(\hat{\pi}\) converges weakly to the Dirac measure \(\delta_{w^*}\). This motivates the \textit{simulated annealing} algorithm which gradually decreases \(\beta^{-1}\) to \(0\). This method has shown great promise in many settings, but has proven difficult in practice due to it being overly sensitive to the rate at which \(\beta^{-1}\) converges.
+
+\subsection{The Main Result}
+We now turn to the paper that forms the subject of this report. The core aim is to understand the statistical properties of SGLD, in particular how effectively it can minimize the risk. The novelty in this work lies in the fact that the analysis is \textit{non-asymptotic} and focuses on finite-time guarantees. If the limiting properties of the Langevin equation given in the previous section are to be used they must first be refined into non-asymptotic results which naturally will require the adoption of additional analytic tools.
+
+Another important aspect of this analysis is that it doesn't restrict the loss function to the convex case. With SGLD finding popularity primarily in non-convex learning problems it is fitting to avoid such a constraint.
+
+The main result of the paper\cite{Raginsky2017Non-ConvexAnalysis} is, under the suitable assumptions and for suitably small \(\varepsilon >0\) we have
+\begin{equation}\label{eq:main_result}
+    \Bbb{E} r(W_k) - r^* \leq \Bcal{O} \bigg ( c_l(\beta, d) \cdot \Big (\varepsilon + n^{-1/4}\log(\varepsilon) + \beta n^{-1} \Big ) + \frac{d\log(\beta)}{\beta}  \bigg ),
+\end{equation}
+where \(k = \Omega \big ( c(\beta, d) \varepsilon^{-4} \log \big ( 1/\varepsilon \big ) \big )\) and \(\eta^{1/4} \leq \Bcal{O} \big ( \varepsilon \log \big ( 1/\varepsilon \big ) \big )\). The constant \(c_l(\beta, d)\) is the \textit{logarithmic Sobolev constant} and is bounded by
+\begin{equation*}
+    c_l(\beta, d) \leq \Bcal{O} \big ( \beta + d \big )^2 \exp(\Bcal{O} \big ( \beta + d \big ) \big ).
+\end{equation*}
+To obtain this result they show that \(W_k\) and \(W(t)\) are \textit{close} in some precises sense and then perform most of the analysis using the Langevin equation. In the interest of brevity we will focus only on the excess risk for the Langevin dynamics. This is extended to the full result following the addition of a single term (the \(n^{-1/4}\log(\varepsilon)\) term in the equation above).
+
+\section{Functional Inequalities and Exponential Ergodicity}
+In this section we will discuss logarithmic Sobolev inequalities and some of their interesting properties. Speaking generally, functional inequalities of this sort are designed to provide an abstract link between analytic features of evolving systems and probabilistic convergence to equilibrium. We will consider only the case of the Langevin dynamics given in (\ref{eq:lang_sde}) as a more broadly applicable presentation would require the use of diffusion semigroups which are outside of the scope of these notes (see appendix \ref{sec:app_semi}).
+
+\subsection{Logarithmic Sobolev inequalities}\label{sec:log_sob}
+For a probability measure \(\mu\) on \(\Bbb{R}^d\) and a suitably integrable function \(\varphi: \Bbb{R}^d \to \Bbb{R}_+\) define the \textit{entropy}
+\begin{equation*}
+    \operatorname{Ent}_{\mu}(\varphi) = \mu \big (\varphi \log{\varphi} \big ) - \mu(\varphi)\log \mu(\varphi).
+\end{equation*}
+This can produce many familiar quantities. For example suppose \(\varphi\) is a probability density with respect to the Lebesgue measure, \(\nu(dx) = \varphi(x)dx\), then the entropy gives the negative \textit{differential entropy},
+\begin{equation*}
+    \operatorname{Ent}_{\lambda}(\varphi) = -h(\nu) = \int_{\Bbb{R}^d} \varphi(x) \log{\varphi(x)} dx,
+\end{equation*}
+where \(\lambda\) is the Lebesgue measure on \(\Bbb{R}^d\). Also, if \(\varphi = \Brm{d}\nu / \Brm{d}\mu\) is the Radon-Nikodym derivative then we recover the \textit{relative entropy}
+\begin{equation*}
+    Ent_{\mu}(\varphi) = D(\nu \| \mu) = \int_{\Bbb{R}^d} \frac{\Brm{d} \nu}{\Brm{d} \mu} \log{\frac{\Brm{d} \nu}{\Brm{d} \mu}} d\mu.
+\end{equation*}
+We say that \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality with constant \(c_l > 0\) if for any \(\varphi \in C^1(\Bbb{R}^d)\)
+\begin{equation*}
+    \operatorname{Ent}_{\hat{\pi}}(\varphi^2) \leq 2 c_l \beta^{-1} \hat{\pi}(\|\nabla \varphi\|^2).
+\end{equation*}
+The purpose of this inequality is not clear at first glance. Speaking abstractly, it can be seen from the definition of \(\hat{\pi}\) that it reduces to a property of the potential \(R\) and the parameter \(\beta\). Once we show that such an inequality is related to the probabilistic convergence of \(W(t)\) through the parameter \(c\) we will have a direct, albeit complicated, relationship between the geometry of \(R\), the amount of noise applied and the rate of convergence.
+
+\subsection{Exponential Ergodicity and Other Properties}
+An important result to follow from such an inequality is exponential convergence in entropy. For all \(t \geq 0\) define the probability measure \(\nu_t\) such that \(W(t) \sim \nu_t\).
+\begin{theorem}[Exponential ergodicity in relative entropy \cite{Bakry2014AnalysisOperators}]\label{thm:exp_erg}
+Suppose \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality with constant \(c > 0\). Then if \(D(\nu_0 \| \hat{\pi}) < \infty\) we have exponential convergence in relative entropy: 
+\begin{equation*}
+    D(\nu_t \| \hat{\pi}) \leq e^{-2t/c} D(\nu_0 \| \hat{\pi}).
+\end{equation*}
+\end{theorem}
+This theorem is a non-asymptotic analogue of the convergence result stated in (\ref{eq:gibbs_cvgt}). In Proposition \ref{prop:est_in_risk} we will use this result to obtain non-asymptotic bounds in expectations of functions. It can be also be shown that this gives convergence in second-moment: \(\nu_t(\|w\|^2) \to \hat{\pi}(\|w\|^2)\) as \(t \to \infty\) (see Theorem 7.12 in \cite{Villani2003TopicsTransportation}).
+
+Another interesting property of this inequality is its relationship to the problem of optimal transportation. Let \(\mu\) and \(\nu\) be probability measures on \(\Bbb{R}^d\) and define the \textit{coupling} of \(\mu\) and \(\nu\), \(\Gamma(\mu, \nu)\) as the set of probability measures \(\gamma\) on \(\Bbb{R}^d \times \Bbb{R}^d\) such that if \((X, Y) \sim \gamma\) it has marginal distributions \(X \sim \mu\), \(Y \sim \nu\). Define the \textit{\(2\)-Wasserstein distance} between \(\mu\) and \(\nu\) by
+\begin{equation*}
+    \Bcal{W}_2(\mu, \nu) = \bigg ( \inf_{\gamma \in \Gamma(\mu, \nu)} \int \|x - y\|^2 \gamma(dx, dy) \bigg )^\frac{1}{2}.
+\end{equation*}
+The problem of optimal transportation is not especially relevant to the subject of these notes. We are only interested in this object because it has some pleasant computational properties. For example, unlike the relative entropy this is a metric and so it admits nice properties such as the triangle inequality. We form a relationship between these two objects using logarithmic Sobolev inequalities.
+\begin{theorem}[Otto-Villani Theorem \cite{Bakry2014AnalysisOperators}]\label{thm:otto_villani}
+Suppose \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality with constant \(c_l > 0\). Then for any probability measure \(\mu\) on \(\Bbb{R}^d\),
+\begin{equation*}
+    \Bcal{W}_2(\hat{\pi}, \mu)^2 \leq 2 c_l D(\mu \| \hat{\pi}).
+\end{equation*}
+\end{theorem}
+
+There are many more interesting properties that follow from this inequality but the two given above are the only ones that will be relevant in the following analysis. Another application of this inequality can be found in the study of concentration which is covered in \cite{vanHandel2014ProbabilityDimension}.
+
+\section{The Diffusion Approximation of the Gibbs Sampler}
+We now return to the primary subject of these notes. In this section we treat the training data \(\Bbf{z}\) as a deterministic element of \(\Bcal{Z}^n\) which we extend to the random case in the sequel.
+
+\subsection{Optimization Error of the Langevin Dynamics}
+Let's start by assuming the existence of a logarithmic Sobolev inequality -- later we will give sufficient conditions for it to hold:
+\begin{enumerate}
+    \item[\namedlabel{itm:ass_log_sob}{(B.1)}] Suppose \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality with constant \(c_l\).
+\end{enumerate}
+As we have seen in the previous section, under the assumption of (B.1) we have some powerful and relevant results -- most notably exponential ergodicity in relative entropy. The relevance of this is made clear by the following decomposition:
+
+\begin{lemma}\label{lem:rel_ent_decomp}
+Suppose \(\mu\) is a probability measure on \(\Bbb{R}^d\) with finite differential entropy such that \(\mu(R) < \infty\). Then we have
+\begin{equation*}
+    D(\mu \| \hat{\pi}) = -h(\mu) + \beta \mu(R) + \log(\Lambda).
+\end{equation*}
+\end{lemma}
+
+This follows immediately from the definition of relative entropy. We can apply this with \(\mu = \nu_t\) and \(\mu = \hat{\pi}\) to obtain
+\begin{equation}\label{eq:lang_opt_term}
+    \nu_t(R) - \hat{\pi}(R) = \beta^{-1} \big ( D(\nu_t \| \hat{\pi}) + h(\nu_t) - h(\hat{\pi}) \big ).
+\end{equation}
+Here we have used the fact that \(D(\hat{\pi} \| \hat{\pi}) = 0\).
+
+A simple way of bounding the differential entropy follows from the \textit{maximum entropy principle}. This states that given a probability distribution on \(\Bbb{R}^d\) has finite total variance \(\sigma^2\), it must have differential entropy bounded by that of the Gaussian random variable \(\xi \sim N(0, \sigma^2 I_d)\) given by
+\begin{equation}\label{eq:gaus_ent}
+    h(\xi) = \frac{d}{2} \log(2\pi e \sigma^2).
+\end{equation}
+In the next proposition we will make use of this bound. This also motivates the next assumption:
+\begin{enumerate}
+    \item[\namedlabel{itm:ass_var_cts}{(B.2)}] Suppose there exists \(B_c > 0\) such that for any \(\Bbf{z} \in \Bcal{Z}^N\), \(t \geq 0\) it holds that \(\Bbb{E}(\|W(t)\|^2) \leq B_c\).
+\end{enumerate}
+In addition, we will need to make some assumptions about the smoothness of \(R\):
+\begin{enumerate}
+    \item[\namedlabel{itm:ass_smooth}{(B.3)}] Suppose there exists \(M, B > 0\) such that for all \(z \in \Bcal{Z}\), \(f(\cdot, z)\) is \(M\)-smooth and \(\|\nabla f(0, z)\| \leq B\).
+\end{enumerate}
+Recall that a function \(\varphi \in C^1(\Bbb{R}^d)\) is \(M\)-smooth if for any \(w_1, w_2 \in \Bbb{R}^d\)
+\begin{equation*}
+    \|\nabla \varphi(w_1) - \nabla \varphi(w_2)\| \leq M \|w_1 - w_2\|.
+\end{equation*}
+An immediate consequence of this assumption is a bound on the gradient that is uniform over \(z \in \Bcal{Z}\):
+\begin{equation}\label{eq:grad_bounds}
+    \| \nabla f(w, z) \| \leq M \|w\| + B.
+\end{equation}
+It follows from this assumption that both \(R\) and \(r\) are also \(M\)-smooth and have gradients bounded by \(B\) at the origin.
+
+\begin{lemma}\label{lem:quadratic_bounds}
+Suppose assumption \ref{itm:ass_smooth} holds, then for any \(w \in \Bbb{R}^d\) and \(w^* \in \operatorname{argmin}_{w \in \Bbb{R}^d} R(w)\) it holds that
+\begin{equation*}
+    |R(w) - R(w^*)| \leq \frac{M}{2} \| w - w^* \|^2.
+\end{equation*}
+\begin{proof}
+By the fundamental theorem of calculus we obtain
+\begin{equation*}
+    R(w) - R(w^*) = \int_0^1 \langle w - w^*, \nabla R(tw^* + (1-t) w) \rangle dt.
+\end{equation*}
+\(R\) is \(M\)-smooth and \(\nabla R(w^*) = 0\) so we can bound the gradient by \(\|\nabla R(w)\| \leq M \|w - w^*\|\). After applying the Cauchy-Schwarz inequality we use this bound to deduce
+\begin{equation*}
+    |R(w) - R(w^*)| \leq \int_0^1 \|w-w^*\| \|\nabla R(tw^* + (1-t)w)\|dt \leq \int_0^1 Mt \|w - w^*\|^2 dt.
+\end{equation*}
+\end{proof}
+\end{lemma}
+
+Following from a similar approach to the result given in (\ref{eq:lang_opt_term}), we now deduce bounds in expectation for the optimization error.
+\begin{proposition}\label{prop:opt_error}
+Suppose \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold and the distribution of \(W_0\) has the property \(D(\mu_0 \| \hat{\pi}) < \infty\). Then we have the bound
+\begin{equation*}
+    \Bbb{E} R \big ( W(t) \big ) - R^* = \beta^{-1} e^{-2t/c_l}D(\mu_0 \| \hat{\pi}) + \frac{d}{2} \beta^{-1} \log(MB_c \beta e),
+\end{equation*}
+where \(R^* = \min_{w \in \Bbb{R}^d} R(w)\).
+\end{proposition}
+Note that the first term decays exponentially fast in \(t\) while the second term is fixed. This result suggests that the stopping time should grow linearly with \(c_l\).
+
+\begin{proof}
+Applying Lemma \ref{lem:rel_ent_decomp} to the measure \(\nu_t\) and subtracting \(R^*\) yields
+\begin{equation*}
+    \Bbb{E} R \big ( W(t) \big ) - R^* =  \beta^{-1} \big ( D(\nu_t \| \hat{\pi}) + h(\nu_t) - \log(\Lambda) - \beta R^*).
+\end{equation*}
+We start by bounding the last two terms which can be written as
+\begin{equation*}
+    \log(\Lambda) + \beta R^* = \log \bigg ( \int_{\Bbb{R}^d} e^{-\beta(R(w) - R^*)} dw \bigg ).
+\end{equation*}
+By assumption Lemma \ref{lem:quadratic_bounds} the exponent is bounded using \(R(w) - R^* \leq M/2 \|w - w^*\|^2\) which holds for any \(w^* \in \operatorname{argmin}_{w \in \Bbb{R}^d} R(w)\). With this, we compute the Gaussian integral yielding
+\begin{equation}\label{eq:opt_error_1}
+    \log(\Lambda) + \beta R^* \geq \frac{d}{2} \log \bigg ( \frac{2\pi}{\beta M} \bigg ).
+\end{equation}
+Next, the maximum entropy principle is used bound the second term. Certainly \ref{itm:ass_var_cts} provides \(B_c\) as a bound on the variance of \(\nu_t\) and hence
+\begin{equation}\label{eq:opt_error_2}
+    h(\nu_t) \leq \frac{d}{2} \log (2\pi e B_c).
+\end{equation}
+To conclude, we use Theorem \ref{thm:exp_erg} to bound the first term.
+\end{proof}
+
+The constant \(B_c\) describes how confined the process \(W(t)\) is to the origin. Certainly if \(R\) was convex with large gradients when moving away from the origin, \(B_c\) would be small. However, such conditions would also result in a large smoothness parameter \(M\). The previous result points to a tradeoff between the benefits of having a relatively flat objective (resulting in a low value of \(M\)) and those of having a sharp confining objective (a low value for \(B_c\)).
+
+\subsection{Obtaining Error in Population Risk}
+In the previous section we exploited the fact that \(R\) appears in the density of \(\hat{\pi}\) to form a relationship between the quantity \(\Bbb{E}R(W(t))\) and the divergence \(D(\nu_t \| \hat{\pi})\). Thus to analyse the quantity \(\Bbb{E}r(W(t))\) a different approach is required.
+
+However the principle exhibited in (\ref{eq:lang_opt_term}), that \(\nu_t(R) - \hat{\pi}(R)\) should be small since \(\nu_t\) and \(\hat{\pi}\) are \textit{close} in some sense and \(R\) is \textit{nice} in some sense, should hold once \(R\) is replaced with any suitably \textit{nice} function.
+
+\begin{lemma}{(Wasserstein continuity for quadratic bounded functions).}\label{lem:disc_2w_cont}
+Suppose \(\mu\) and \(\nu\) are probability measures on \(\Bbb{R}^d\) with finite second moments and \(\varphi \in C^1(\Bbb{R}^d)\) such that for some \(c_1, c_2 > 0\), \(\|\nabla \varphi(w)\| \leq c_1 \|w\| + c_2\) for all \(w \in \Bbb{R}^d\). Then there is the bound
+\begin{equation}\label{eq:disc_2w_cont_0}
+    \left | \int_{\Bbb{R}^d} \varphi(w) \mu(dw) - \int_{\Bbb{R}^d} \varphi(w) \nu(dw) \right | \leq (c_1 \sigma + c_2) \Bcal{W}_2(\mu, \nu),
+\end{equation}
+where \(\sigma^2 = \int_{\Bbb{R}^d} \|w\|^2 \mu(dw) \lor \int_{\Bbb{R}^d} \|w\|^2 \nu(dw)\).
+\end{lemma}
+\begin{proof}
+By the fundamental theorem of calculus, for any \(w, v \in \Bbb{R}^d\) we have
+\begin{equation*}
+    \varphi(w) - \varphi(v) = \int_0^1 \langle w - v, \nabla \varphi(tw + (1-t) v) \rangle dt.
+\end{equation*}
+Applying the Cauchy-Schwarz inequality along with the quadratic bounds yields
+\begin{equation}\label{eq:disc_2w_cont_1}
+    |\varphi(w) - \varphi(v)| \leq \|w - v\| \bigg ( \frac{c_1}{2} (\|w\| + \|v\|) + c_2 \bigg ).
+\end{equation}
+Recall the notion of a coupling from section \ref{sec:log_sob}. Taking any \(\gamma \in \Gamma(\mu, \nu)\), the right-hand side of \ref{eq:disc_2w_cont_0} can be written as a single integral yielding
+\begin{align*}
+    \left | \int_{\Bbb{R}^d} \varphi(w) \mu(dw) - \int_{\Bbb{R}^d} \varphi(w) \nu(dw) \right |^2 &\leq \bigg [ \int_{\Bbb{R}^d} |\varphi(w) - \varphi(v)| \gamma(dw, dv) \bigg ]^2\\
+    &\leq \int_{\Bbb{R}^d} \|w - v\|^2 \gamma(dw, dv) \int_{\Bbb{R}^d} \bigg ( \frac{c_1}{2} (\|w\| + \|v\|) + c_2 \bigg )^2 \gamma(dw, dv),
+\end{align*}
+where the last line follows from equation (\ref{eq:disc_2w_cont_1}) and the Cauchy-Schwarz inequality. The second integral is bounded using the triangle inequality in \(L^2(\gamma)\):
+\begin{align*}
+    \bigg [ \int_{\Bbb{R}^d} \bigg ( \frac{c_1}{2} (\|w\| + \|v\|) + c_2 \bigg )^2 \gamma(dw, dv) \bigg ]^{1/2} &\leq \frac{c_1}{2} \bigg ( \sqrt{\int_{\Bbb{R}^d} \|w\|^2 \mu(dw)} + \sqrt{\int_{\Bbb{R}^d} \|w\|^2 \nu(dw)} \bigg ) + c_2\\
+    &\leq c_1 \sigma + c_2.
+\end{align*}
+Finally, taking an infimum of the first term over all \(\gamma \in \Gamma(\mu, \nu)\) gives \(\Bcal{W}_2^2(\mu, \nu)\).
+\end{proof}
+
+With this we can now bound the expected difference in population risks of \(W(t)\) and the Gibbs algorithm which will be useful for computing the excess risk. Certainly, after we obtain the excess risk of the Gibbs algorithm we can add this term to obtain the excess risk of \(W(t)\).
+
+\begin{proposition}\label{prop:est_in_risk}
+Suppose \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold and \(D(\mu_0 \| \hat{\pi}) < \infty\). Then there is the bound
+\begin{equation*}
+    |\nu_t(r) - \hat{\pi}(r)| \leq \big ( M\sqrt{B_c} + B \big ) \sqrt{2 c_l D(\mu_0 \| \hat{\pi})} \, e^{-t/c_l}.
+\end{equation*}
+\end{proposition}
+\begin{proof}
+Since \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality, Theorems \ref{thm:exp_erg} and \ref{thm:otto_villani} combine to give the bound
+\begin{equation*}
+    \Bcal{W}_2(\nu_t, \hat{\pi}) \leq \sqrt{2 c_l D(\mu_0 \| \hat{\pi})} \, e^{-t/c_l}.
+\end{equation*}
+The result then follows from Lemma \ref{lem:disc_2w_cont} with \(\varphi = R\), \(\mu = \nu_t\), \(\nu = \hat{\pi}\). Indeed, by assumption \(R\) satisfies the quadratic bounds with \(c_1 = M\) and \(c_2 = B\). To obtain a bound for \(\sigma^2\) we recall from section \ref{sec:log_sob} that \(\nu_t(\|w\|^2) \to \hat{\pi}(\|w\|^2)\) as \(t \to \infty\). Therefore it must hold that \(\hat{\pi}(\|w\|^2) \leq B_c\) and so \(\sigma^2 \leq B_c\).
+\end{proof}
+
+Showing the asymptotic result \(\nu_t(r) \to \hat{\pi}(r)\) as \(t \to \infty\) requires far less work. It doesn't require the satisfaction of any functional inequality or bounded variance and only depends on \(R\) being sufficiently regular \cite{Pavliotis2014StochasticApplications}. Indeed, the cost of the non-asymptotic analysis is the requirement for more aggressive assumptions and more complex tools.
+
+\section{Generalization Properties of the Gibbs Algorithm}
+In the previous section we considered a fixed set of training examples \(\Bbf{z}\). If we are to study the generalization properties of this algorithm we must understand the stability of it under changes in the set of training examples. To make the dependence on the examples explicit we use the notation \(\hat{\pi}_{\Bbf{z}}\) to denote the Gibbs measure with examples \(\Bbf{z}\) and \(\Lambda_{\Bbf{z}}\) to denote the corresponding normalization constant.
+
+\subsection{Uniform Stability}
+We start by studying the stability of the Gibbs algorithm under changes to single coordinates of the example set.
+
+\begin{proposition}\label{prop:gibbs_wass_stable}
+Suppose \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold and \(\bar{\Bbf{z}} \in \Bcal{Z}^n\) differs from \(\Bbf{z}\) in a single coordinate. Then the associated Gibbs measures for \(\Bbf{z}\) and \(\bar{\Bbf{z}}\) have the property
+\begin{equation*}
+    D(\hat{\pi}_{\bar{\Bbf{z}}} \| \hat{\pi}_{\Bbf{z}}) \leq \frac{2 c_l \beta^2}{n^2} \big ( M^2 B_c + B^2 \big )
+\end{equation*}
+\end{proposition}
+\begin{proof}
+Suppose \(\Bbf{z}\) and \(\bar{\Bbf{z}}\) differ in only the coordinate of index \(i\), for which they take the values \(z_i\) and \(\bar{z}_i\) respectively. Consider the Radon-Nikodym derivative derivative of \(\pi_{\Bbf{z}}\) with respect to \(\pi_{\bar{\Bbf{z}}}\):
+\begin{equation*}
+    \frac{\Brm{d}\hat{\pi}_{\bar{\Bbf{z}}}}{\Brm{d}\hat{\pi}_{\Bbf{z}}}(w) = \frac{\Lambda_{\Bbf{z}}}{\Lambda_{\bar{\Bbf{z}}}} \exp \bigg (\frac{\beta}{n}(f(w, z_i) - f(w, \bar{z}_i)) \bigg ).
+\end{equation*}
+Since by assumption \(\hat{\pi}_{\Bbf{z}}\) satisfies a logarithmic Sobolev inequality it follows that
+\begin{equation}\label{eq:gibbs_wass_stable_1}
+    D(\hat{\pi}_{\bar{\Bbf{z}}} \| \hat{\pi}_{\Bbf{z}}) = Ent_{\hat{\pi}_{\Bbf{z}}} \bigg ( \frac{\Brm{d}\hat{\pi}_{\bar{\Bbf{z}}}}{\Brm{d}\hat{\pi}_{\Bbf{z}}} \bigg ) \leq 2 c_l \int_{\Bbb{R}^d} \bigg \| \nabla \sqrt{\frac{\Brm{d}\hat{\pi}_{\bar{\Bbf{z}}}}{\Brm{d}\hat{\pi}_{\Bbf{z}}}}(w) \bigg \|^2 \hat{\pi}_{\Bbf{z}}(dw).
+\end{equation}
+To this end, we compute the gradient
+\begin{equation*}
+    \nabla \sqrt{\frac{\Brm{d}\hat{\pi}_{\bar{\Bbf{z}}}}{\Brm{d}\hat{\pi}_{\Bbf{z}}}}(w) = \frac{\beta}{2n} \big ( \nabla f(w, z_i) - \nabla f(w, \bar{z}_i) \big ) \sqrt{\frac{\Brm{d}\hat{\pi}_{\bar{\Bbf{z}}}}{\Brm{d}\hat{\pi}_{\Bbf{z}}}(w)}.
+\end{equation*}
+Substituting this into (\ref{eq:gibbs_wass_stable_1}) yields
+\begin{align*}
+    D(\hat{\pi}_{\bar{\Bbf{z}}} \| \hat{\pi}_{\Bbf{z}}) &\leq \frac{c_l \beta^2}{2 n^2} \int_{\Bbb{R}^d} \| \nabla f(w, z_i) - \nabla f(w, \bar{z}_i) \|^2 \hat{\pi}_{\bar{\Bbf{z}}}(dw)\\
+    &\leq \frac{2 c_l \beta^2}{n^2} \Big ( M^2 \,  \hat{\pi}_{\bar{\Bbf{z}}} \big (\|w\|^2 \big ) + B^2 \Big ),
+\end{align*}
+where the second line follows from (\ref{eq:grad_bounds}), a consequence of \ref{itm:ass_smooth}. Using assumption \ref{itm:ass_var_cts} we can further bound the second-moment term with \(\hat{\pi}_{\bar{\Bbf{z}}} \big (\|w\|^2 \big ) \leq B_c\).
+\end{proof}
+
+Using Lemma \ref{lem:disc_2w_cont} and the Otto-Villani theorem we readily deduce uniform stability for the Gibbs algorithm.
+
+\begin{corollary}\label{cor:gibbs_stability}
+Suppose \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold and \(\bar{\Bbf{z}} \in \Bcal{Z}^n\) differs from \(\Bbf{z}\) in a single coordinate. For any \(z \in \Bcal{Z}\) we have the stability bound
+\begin{equation*}
+    \big | \hat{\pi}_{\Bbf{z}}(f(\cdot, z)) - \hat{\pi}_{\bar{\Bbf{z}}}(f(\cdot, z)) \big | \leq \frac{4 c_l \beta}{n} \big ( M^2 B_c + B^2 \big ).
+\end{equation*}
+\end{corollary}
+
+Certainly, it is expected that sensitivity to a change in the training examples should reduce as the number of training examples grows. In the next section, we will show that this result allows us to bound the expected difference in the risk and empirical risk for the Gibbs algorithm.
+
+\subsection{Generalization Error Bounds}
+To obtain bounds in generalization error it is vital that we treat the training examples \(\Bbf{Z} = (Z_1, ..., Z_N)\) as a random variable (as highlighted by its capitalisation). Suppose each coordinate is independently and identically distributed according to the example distribution \(P\) on the set \(\Bcal{Z}\). Note that now the empirical risk \(R\) and the measure \(\nu_t\) are both random.
+
+\begin{proposition}\label{prop:gibbs_gen_bound}
+Suppose \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold with identical constants for any \(\Bbf{z} \in \Bcal{Z}^n\). Then there is the bound,
+\begin{equation*}
+    \Bbb{E}_{\Bbf{Z}}\big ( \hat{\pi}_{\Bbf{Z}}(r) - \hat{\pi}_{\Bbf{Z}}(R) \big ) \leq \frac{4 c_l \beta}{n} \big ( M^2 B_c + B^2 \big ).
+\end{equation*}
+\end{proposition}
+\begin{proof}
+Let \(\bar{Z} \sim P\) be a random variable that is independent of \(\Bbf{Z}\), then the generalization error reads
+\begin{equation*}
+    \Bbb{E}_{\Bbf{Z}}\big ( \hat{\pi}_{\Bbf{Z}}(r) - \hat{\pi}_{\Bbf{Z}}(R) \big ) = \frac{1}{N} \sum_{i=1}^N \Bbb{E}_{\Bbf{Z}} \Bbb{E}_{\bar{Z}} \hat{\pi}_{\Bbf{Z}} \big ( f(\cdot, \bar{Z}) - f(\cdot, Z_i) \big ).
+\end{equation*}
+Since \((Z_1, ..., Z_n, \bar{Z})\) are independently and identically distributed according to \(P\) and we are taking the expectation over all of these, the expression above would be identical if \(\bar{Z}\) was swapped for any one of the coordinates of \(\Bbf{Z}\). To this end, let \(\bar{\Bbf{Z}}^i = (\bar{Z}^i_1, ..., \bar{Z}^i_N)\) with \(\bar{Z}^i_j = Z_j\) for \(j \neq i\) and \(\bar{Z}^i_i = \bar{Z}\). From this argument it follows that \(\Bbb{E}_{\Bbf{Z}} \Bbb{E}_{\bar{Z}} \hat{\pi}_{\Bbf{Z}} f(\cdot, Z_i) = \Bbb{E}_{\bar{\Bbf{Z}}^i} \Bbb{E}_{Z_i} \hat{\pi}_{\bar{\Bbf{Z}}} f(\cdot, \bar{Z})\) -- effectively we have swapped the coordinate of index \(i\) with \(\bar{Z}\). Since \(\Bbf{Z}\) and \(\bar{\Bbf{Z}}\) differ at a single coordinate, Corollary \ref{cor:gibbs_stability} yields the estimate
+\begin{align*}
+    \Bbb{E}_{\Bbf{Z}} \Bbb{E}_{\bar{Z}} \hat{\pi}_{\Bbf{Z}} \big ( f(\cdot, \bar{Z}) - f(\cdot, Z_i) \big ) &= \Bbb{E}_{\Bbf{Z}} \Bbb{E}_{\bar{Z}} \Big [ \hat{\pi}_{\Bbf{Z}} \big ( f(\cdot, \bar{Z}) \big ) - \hat{\pi}_{\bar{\Bbf{Z}}^i} \big ( f(\cdot, \bar{Z}) \big ) \Big ]\\
+    &\leq \frac{4 c_l \beta}{n} \big ( M^2 B_c + B^2 \big ).
+\end{align*}
+\end{proof}
+
+Note that the previous result depends on the Gibbs algorithm only by its uniform stability bound and can be applied to any algorithm with this property.
+
+\section{Completing the Proof}
+\subsection{Excess Risk of the Langevin Dynamics}
+Computing the excess risk is now a task of combining these results. Continuing to treat the training examples as a random variable we note that the expected population risk can be written as \(\Bbb{E} r \big ( W(t) \big ) = \Bbb{E}_{\Bbf{Z}}\nu_t(r)\). In fact, we can decompose the excess risk to give:
+\begin{equation}\label{eq:excess_risk_decomp}
+     \Bbb{E} r \big ( W(t) \big ) - r^* = \Bbb{E}_{\Bbf{Z}}\big ( \nu_t(r) - \hat{\pi}_{\Bbf{Z}}(r) \big ) + \Bbb{E}_{\Bbf{Z}}\big ( \hat{\pi}_{\Bbf{Z}}(r) - \hat{\pi}_{\Bbf{Z}}(R) \big ) + \Bbb{E}_{\Bbf{Z}}\big ( \hat{\pi}_{\Bbf{Z}}(R) - R^* \big ) + \Bbb{E}_{\Bbf{Z}}\big ( R^* - r^* \big ).
+\end{equation}
+We have already seen the first term in Proposition \ref{prop:est_in_risk} when the training examples were considered to be deterministic. To extend this result to the non-deterministic case we require that the assumptions hold with the same constants for any choice of training examples \(\Bbf{z} \in \Bcal{Z}^n\). In addition, if we assume that there exists some \(\gamma > 0\) such that \(D(\mu_0 \| \hat{\pi}_{\Bbf{z}}) < \gamma\) then the proposition can be readily extended to the uniform bound
+\begin{equation}\label{eq:est_in_risk_uni}
+    \Bbb{E}_{\Bbf{Z}}\big ( \nu_t(r) - \hat{\pi}_{\Bbf{Z}}(r) \big ) \leq \big ( M\sqrt{B_c} + B \big ) \sqrt{2 c_l \gamma} \, e^{-t/c_l}.
+\end{equation}
+Once the other terms are handled we obtain the following bound in excess risk.
+
+\begin{proposition}\label{prop:excess_risk}
+Suppose assumptions \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold with identical constants for any \(\Bbf{z} \in \Bcal{Z}^n\) and \(D(\mu_0 \| \hat{\pi}_{\Bbf{z}}) < \gamma\). Then,
+\begin{equation*}
+    \Bbb{E} r \big ( W(t) \big ) - r^* \leq \sqrt{2 \sigma^2 c_l \gamma} \, e^{-t/c_l} + \frac{4 c_l \beta}{n} \sigma^2 + \frac{d}{2} \beta^{-1} \log(MB_c \beta e)
+\end{equation*}
+where \(\sigma = M \sqrt{B_c} + B\).
+\end{proposition}
+
+To obtain a result similar to the one given in \ref{eq:main_result} we use a free parameter \(\varepsilon \in (0, 1)\) and require that \(t = c_l \log(1/\varepsilon)\). A formulation of this sort is useful in practice for performing early stopping.
+
+\begin{proof}
+The third term of (\ref{eq:excess_risk_decomp}) is similar to the optimization error considered in Proposition \ref{prop:opt_error} and can be bounded similarly. Indeed, for any \(\Bbf{z} \in \Bcal{Z}^n\) Lemma \ref{lem:rel_ent_decomp} and \(D(\hat{\pi}_{\Bbf{z}} \| \hat{\pi}_{\Bbf{z}}) = 0\) give
+\begin{equation*}
+    \hat{\pi}_{\Bbf{z}}(R) - R^* = \beta^{-1} \big ( h(\hat{\pi}_{\Bbf{z}}) - \log(\Lambda_{\Bbf{z}}) - \beta R^*).
+\end{equation*}
+Using the same argument as in Proposition \ref{prop:est_in_risk} we obtain \(\hat{\pi}_{\Bbf{z}}(\|w\|^2) \leq B_c\) and so we can readily apply the same entropy bounds as in the proof of Proposition \ref{prop:opt_error}. From this we obtain the estimate
+\begin{equation*}
+    \hat{\pi}_{\Bbf{z}}(R) - R^* \leq \frac{d}{2} \beta^{-1} \log(MB_c \beta e).
+\end{equation*}
+
+For the fourth term, note that \(\Bbb{E}_{\Bbf{z}}(R(w)) = r(w)\) and so for any \(w^* \in \operatorname{argmin}_{w \in \Bbb{R}^d} R(w)\) we can write
+\begin{equation*}
+    \Bbb{E}_{\Bbf{Z}}\big ( R^* - r^* \big ) = \Bbb{E}_{\Bbf{Z}} \Big ( \min_{w \in \Bbb{R}^d} R(w) - R(w^*) \Big ) \leq 0
+\end{equation*}
+The second and third terms are bounded in equation (\ref{eq:est_in_risk_uni}) and Proposition \ref{prop:gibbs_gen_bound} respectively. Combining these as in (\ref{eq:excess_risk_decomp}) gives the final result.
+\end{proof}
+
+One issue with this result is it depends greatly on the quantity \(c_l\) which is not easy to interpret. Also, it almost certainly depends on the constants \(\beta, M, B_c, d\) and \(B\) without explicitly expressing how. Further, the assumptions made are somewhat technical and so the practical cases in which this result applies is not yet clear. In the next section we will discuss the assumptions given in the original paper and state a bound for the logarithmic Sobolev constant.
+
+\subsection{Assumptions and the Logarithmic Sobolev Constant}
+Showing that a measure of the form \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality is not at all easy. Providing simple criterion for such an inequality, even in this simple case, is still an active area of research. Most of these criterion depend on global geometric properties of the potential function, the simplest is given by the Bakry-Emery criterion. In the case of \(\hat{\pi}\), this states that if \(R\) is smooth and \(\rho\)-strongly convex then \(\hat{\pi}\) satisfies a logarithmic Sobolev inequality with constant \(\rho^{-1}\). Here strong convexity refers to the uniform bound,
+\begin{equation*}
+    D^2 R \geq \rho I_d,
+\end{equation*}
+where \(D^2R\) denotes the Hessian of \(R\) (i.e. the eigenvalues of \(D^2 R\) are bounded below by \(\rho\)). This, along with the previous analysis, suggests that the logarithmic Sobolev inequality can connect global geometric properties of the objective with rates of convergence and magnitude of excess risk. Of course, the potential of this connection is much more impressive in the non-convex case.
+
+The approach taken in the original paper uses a combination of criterion that are referred to in the literature as \textit{Lyapunov criterion}. These require the existence of a function \(V \in C^2(\Bbb{R}^d)\) and constants \(\lambda, \kappa, \delta > 0\) such that
+\begin{equation*}
+    \frac{\Bcal{L}V}{V} \leq -\lambda + \kappa \mathbbm{1}_{B(0, \delta)},
+\end{equation*}
+where \(\Bcal{L}\) is the infinitesimal generator (see appendix \ref{sec:app_semi}) and \(B(0, \delta)\) is the Euclidean ball of radius \(\delta\) about the origin. Under such conditions a Poincar\'{e} inequality, which is much weaker, can be extended to a logarithmic Sobolev inequality. Additionally, an extremely crude estimate for a Poincar\'{e} inequality can be obtained. A discussion of how \(c_l\) is bounded in the paper is beyond the scope of these notes and we refer to appendices A, B and E of the original paper for the proof. A detailed review of criterion for such inequalities can be found in \cite{Bakry2014AnalysisOperators}.
+
+So far our analysis has depended on technical assumptions \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} holding as well as \(D(\mu_0 \| \hat{\pi}) < \infty\). In the next proposition we show that such conditions can be replaced with neater sufficient conditions that are much easier to verify. These are the assumptions presented as part of the main result in the original paper.
+
+\begin{proposition}\label{prop:nicer_assumptions}
+Suppose the following holds:
+\begin{enumerate}
+    \item[\namedlabel{itm:ass_smooth_2}{(A.1)}] There exists \(M, A, B > 0\) such that for all \(z \in \Bcal{Z}\), \(f(\cdot, z)\) is \(M\)-smooth, \(\|\nabla f(0, z)\| \leq B\) and \(|f(0, z)| \leq A\).
+    \item[\namedlabel{itm:ass_dissipative}{(A.2)}] There exists \(m > 0, b \geq 0\) such that for each \(z \in \Bcal{Z}\), the function \(f(\cdot, z)\) is \((m, b)\)-dissipative: for all \(w \in \Bbb{R}^d\), \(\langle w, \nabla f(w, z) \rangle \geq m \|w\|^2 - b\).
+    \item[\namedlabel{itm:ass_init_int}{(A.3)}] The probability law \(\mu_0\) of the initial hypothesis \(W_0\) has a bounded and strictly positive density \(\rho_0\) with respect to the Lebesgue measure on \(\Bbb{R}^d\) and
+    \begin{equation*}
+        \kappa_0 := \log \int _{\Bbb{R}^d} e^{\|w\|^2} \mu_0(dw) < \infty.
+    \end{equation*}
+\end{enumerate}
+Then for any \(\Bbf{z} \in \Bcal{Z}^n\) assumptions \ref{itm:ass_log_sob}, \ref{itm:ass_var_cts} and \ref{itm:ass_smooth} hold with \(B_c = \kappa_0 + (b + d/\beta)/m\),
+\begin{equation}\label{eq:nicer_assumptions_1}
+    c_l = \Bcal{O} \big ( \beta + d \big )^2 \exp(\Bcal{O} \big ( \beta + d \big ) \big ),
+\end{equation}
+and additionally \(D(\mu_0 \| \hat{\pi}) < \gamma\) with \(\gamma = \Bcal{O} (\beta)\).
+\end{proposition}
+The proof of the relative entropy bound can be found in Lemma 3.4 of the original paper and the proof that \ref{itm:ass_var_cts} holds is given in Lemma 3.2.
+
+Given a loss function \(f\), \ref{itm:ass_smooth_2} and \ref{itm:ass_init_int} are certainly easy to verify, but assumption \ref{itm:ass_dissipative} may still seem somewhat unclear and overly-technical. A clearer sufficient condition is that for each \(z \in \Bcal{Z}\) there exists \(m_z \geq m\) such that
+\begin{equation*}
+    f(w, z) = m_z \|w\|^2 + f_0^z(w),
+\end{equation*}
+where \(f_0^z\) is a \(2\sqrt{bm}\)-Lipschitz continuous function. In other words, \(f(\cdot, z)\) deviates from the quadratic function \(m_z \|\cdot\|^2\) by a Lipschitz function.
+
+% \begin{proof}[Proof that \ref{itm:ass_var_cts} holds]TODO
+% Consider the function \(\varphi(w) = e^{\|w\|^2}\), applying It\^{o}'s lemma yields
+% \begin{equation*}
+%     \varphi(W(t)) = \varphi(W(0)) + \int_0^t
+% \end{equation*}
+% \end{proof}
+
+% Full bounds for \(c_l\) and \(D(\mu_0 \| \hat{\pi})\)
+% \begin{gather*}
+%     c_l = \frac{2m^2 + 8M^2}{m^2M} + \frac{\beta}{\lambda^*}\bigg ( \frac{6M(d + \beta)}{m} + 2 \bigg )\\
+%     \frac{1}{\lambda^*} \leq \frac{1}{m\beta(d+b\beta)} + \frac{2C(d + b\beta)}{m\beta} \exp \bigg ( \frac{2}{m}(M + B)(b\beta + d) + \beta(A + B) \bigg ).
+% \end{gather*}
+% \begin{equation*}
+%     D(\mu_0 \| \hat{\pi}) \leq \log \| p_0 \|_{\infty} + \frac{d}{2} \log \frac{3\pi}{m\beta} + \beta \bigg ( \frac{M\kappa_0}{3} + B \sqrt{\kappa_0} + A + \frac{b}{2} \log{3} \bigg ).
+% \end{equation*}
+
+\subsection{Gaussian Smoothing for Fast Convergence}
+A popular approach for overcoming the difficulties of non-convex optimization is by smoothing the objective, often with a Gaussian convolution. This is referred to as global continuation.
+
+Recent works \cite{Bardet2015FunctionalDependence, Zimmermann2013LogarithmicMeasures} have explored how taking Gaussian convolutions can sharpen bounds on logarithmic Sobolev constants in the compact case. In the next result, based on Theorem 1.2 of \cite{Bardet2015FunctionalDependence}, we consider modifying the Langevin dynamics instead using
+\begin{equation}\label{eq:smooth_sde}
+    dW(t) = - \nabla \tilde{R}(w) dt + \sqrt{2\beta^{-1}} dB(t).
+\end{equation}
+where \(\tilde{R}\) is a particular smoothed form of \(R\). The method of smoothing we consider has also appeared under the name Entropy-SGD \cite{Chaudhari2017Entropy-SGD:Valleys}.
+
+\begin{proposition}
+Let \(\sigma \geq 0\) and \(\delta \geq \sigma\) and consider the smoothed empirical risk
+\begin{equation*}
+    \tilde{R}(w) = - \frac{1}{\beta} \log \int_{\|v\| \leq \delta} \exp(-\beta R(w)) \gamma_{\sigma^2}(v-w)dv.
+\end{equation*}
+Then the process defined by (\ref{eq:smooth_sde}) has stationary distribution \(\tilde{\pi} * \gamma_{\sigma^2}\) where
+\begin{equation*}
+    \tilde{\pi}(dw) = \tilde{\Lambda}^{-1} \exp(-\beta R(w)) \mathbbm{1}_{B(0, \delta)}(w) dw, \quad \tilde{\Lambda} = \int_{B(0, \delta)} \exp(-\beta R(w)) dw.
+\end{equation*}
+which satisfies a logarithmic Sobolev inequality with constant
+\begin{equation*}
+    c_l = \bigg ( K_1 d + K_2 \frac{\delta^2}{\sigma^2} \bigg ) \delta^2 \exp \bigg ( 4 \frac{\delta^2}{\sigma^2} \bigg ),
+\end{equation*}
+where \(K_1, K_2 > 0\) are universal constants.
+\end{proposition}
+
+Note that the exponential dependence on dimension has been traded for linear dependence which is highly desirable when applied to large models such as deep neural networks. However, this comes at the cost of having the objective constrained to a ball of finite radius and in practice, whatever computational expense comes with having to estimate the convolution. Though this result doesn't immediately point to a new algorithm it does suggest that the logarithmic Sobolev inequality could be a powerful tool for understanding global continuation and related methods such as artificial feature noise.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\newpage
+
+\begin{appendices}
+\section{Functional Inequalities for Diffusion Semigroups}\label{sec:app_semi}
+Initially, these notes contained an overview of diffusion semigroups and an introduction to logarithmic Sobolev inequalities framed in full generality for this case. This was later swapped with restriction to the Langevin dynamics. For the interested reader, this is now presented in this appendix. Note that this is still an informal introduction, a more complete introduction to this is given in
+\cite{Bakry2014AnalysisOperators}.
+\subsection{A Brief Overview of Diffusion Semigroups}
+Suppose \(X(t)\) is a continuous-time Markov process on \(\Bbb{R}^d\). Define the associated \textit{Markov semigroup} \((P_t)_{t \geq 0}\) on suitable measurable functions \(\varphi\) by
+\begin{equation*}
+    P_t \varphi(x) = \Bbb{E} [ \varphi(X(t)) | X(0) = x].
+\end{equation*}
+It is referred to as a semigroup because it satisfies the semigroup property: \(P_t \circ P_s = P_{t + s}\) for any \(t,s \geq 0\) and \(P_0 = \operatorname{Id}\), both of which follow directly from the Markov property of \(X(t)\). As a result, the semigroup can be characterised entirely by its derivative at \(t=0\). We represent this derivative with the operator \(\Bcal{L}\), which maps a function \(\varphi\) to the derivative of \(P_t \varphi\) at \(t=0\). This operator is called the (infinitesimal) \textit{generator} and is defined by
+\begin{equation*}
+    \Bcal{L} \varphi(x) = \lim_{t \to 0} \frac{P_t \varphi(x) - \varphi(x)}{t}.
+\end{equation*}
+Indeed, the \textit{Kolmogorov equation} shows that \(\Bcal{L}\) characterises the semigroup through the differential equation
+\begin{equation}\label{eq:semi_kolm}
+    \frac{d}{dt}P_t \varphi = P_t \Bcal{L} \varphi = \Bcal{L} P_t \varphi.
+\end{equation}
+
+For each \(t \geq 0\) we notate the distribution of \(X(t)\) with \(\nu_t\). When studying the probability distribution associated with the semigroup it is helpful to use the \(L^2\)-adjoint of the generator, denoted \(\Bcal{L}^*\) (i.e. \(\langle \Bcal{L}f, g \rangle_{L^2} = \langle f, \Bcal{L}^*g \rangle_{L^2}\) where \(\langle \cdot, \cdot  \rangle_{L^2}\) denotes the \(L^2\)-inner product). Suppose \(\nu_t\) has a density \(\rho_t\) for any \(t \geq 0\) and \(X(0)\) is deterministic. Then the right-hand side of (\ref{eq:semi_kolm}) reads
+\begin{equation*}
+    P_t \Bcal{L} \varphi(X_0) = \int \Bcal{L}\varphi(x) \rho_t(x) dx = \langle \Bcal{L} \varphi, \rho_t \rangle_{L^2(\Bbb{R}^d)}.
+\end{equation*}
+On the other hand, we can obtain an alternative form for the derivative of \(P_t\):
+\begin{equation*}
+    \partial_t P_t \varphi(X_0) = \frac{d}{dt} \int \varphi(x) \rho_t(x) dx = \langle \varphi, \partial_t \rho_t \rangle_{L^2(\Bbb{R}^d)}.
+\end{equation*}
+From equation (\ref{eq:semi_kolm}) it is given that the previous two equations are equivalent. Thus, if \(\varphi\) is arbitrary in some suitably dense function space, it can be shown that
+\begin{equation}\label{eq:semi_fp}
+    \partial_t \rho_t = \Bcal{L}^* \rho_t.
+\end{equation}
+This result is referred to as the \textit{Fokker-Planck equation} or \textit{Kolmogorov forward equation}. In the case that \(X(0)\) is non-deterministic an identical result is readily obtained.
+
+Suppose \(\rho\) is a probability density with respect to the Lebesgue measure, then if it is the case that
+\begin{equation*}
+    \Bcal{L}^* \rho = 0
+\end{equation*}
+then \(\rho\) defines a \textit{stationary} measure. Certainly, if \(X_0 \sim \rho(d\lambda)\) then equation (\ref{eq:semi_fp}) yields \(\rho_t = \rho\) for all \(t \geq 0\). In some sense, \(\rho\) represents a state of equilibrium for \(X(t)\).
+
+In the case that \(X(t) = W(t)\), the generator and its adjoint are given by
+\begin{gather}\label{eq:semi_adjoint}
+    \Bcal{L} \varphi(x) = - \nabla R(x) \cdot \nabla  \varphi(x) + \beta^{-1} \nabla \cdot \nabla \varphi(x),\\
+    \Bcal{L}^* \varphi(x) = \nabla \cdot \big ( \nabla R(x) \varphi(x) + \beta^{-1} \nabla \varphi(x)  \big ).\nonumber
+\end{gather}
+A simple computation reveals that \(\Bcal{L}^* \hat{\pi} = 0\) and so \(\hat{\pi}\) must be stationary. After finding a stationary measure it is natural to ask whether \(X(t)\) converges towards it as \(t \to \infty\), in some probabilistic sense. Behaviour of this sort is broadly referred to as \textit{ergodicity}. In the next section we will focus on a form of ergodicity that is applicable to the non-asymptotic analysis.
+
+In the interest of brevity we have completely avoided discussions about domains of definition for the operators defined above. Under the condition that \(X(t)\) has a stationary measure \(\mu\) we can show that the domains of \((P_t)_{t \geq 0}\) and \(\Bcal{L}\), denoted \(\Bcal{D}\) and \(\Bcal{D}(\Bcal{L})\) respectively, are both dense in \(L^2(\mu)\). In the case that \(X(t)\) is a diffusion process (a solution to an SDE with \textit{nice} coefficients) results that hold for bounded measurable functions extend naturally to the entire domain. A complete treatment of these domains is given in the first two chapters of \cite{Bakry2014AnalysisOperators}.
+
+\subsection{Functional Inequalities and Exponential Ergodicity}
+We begin by defining one additional object for Markov processes with stationary measures. Suppose \(X(t)\) has a stationary measure \(\mu\) and define the associated \textit{Dirichlet form},
+\begin{equation*}
+    \Bcal{E}(\varphi) = - \langle \varphi, \Bcal{L} \varphi \rangle_{L^2(\mu)}.
+\end{equation*}
+The purpose of this object may seem unclear to begin with, but we will show that given the right function it can produce important statistical quantities. In the case that \(X(t) = W(t)\) and \(\mu = \hat{\pi}\) it can be shown using integration by parts that
+\begin{equation}\label{eq:gibbs_dirichlet_form}
+    \Bcal{E}(\varphi) = \beta^{-1} \hat{\pi} \big (\|\nabla \varphi \|^2 \big ).
+\end{equation}
+
+Now we can state the most simple functional inequality. We say that \(\mu\) satisfies a \textit{Poincar\'{e} inequality} if for some \(\lambda > 0\)
+\begin{equation*}
+    \Bbb{E}_{\mu}|\varphi|^2 \leq \lambda^{-1} \Bcal{E}(\varphi),
+\end{equation*}
+for all suitable measurable \(\varphi\). The reason this inequality is interesting becomes clearer once we set \(\varphi = P_t \phi\) for some \(\phi \in \Bcal{D}(\Bcal{L})\) and any \(t \geq 0\). The Kolmogorov equation implies
+\begin{equation*}
+    \Bcal{E}(P_t\phi) = - \langle P_t\phi, \partial_t P_t\phi \rangle_{L^2(\mu)} = - \partial_t \Bbb{E}_{\mu} |P_t \phi|^2,
+\end{equation*}
+and hence with the Poincar\'{e} inequality we obtain \(\partial_t \Bbb{E}_{\mu} |P_t \phi|^2 \leq - \lambda \Bbb{E}_{\mu} |P_t \phi|^2\) for all \(t \geq 0\). By Gronwall's lemma, we obtain exponential decay in the second moment,
+\begin{equation*}
+    \Bbb{E}_{\mu} |P_t \varphi|^2 \leq e^{-\lambda t} \Bbb{E}_{\mu} |\varphi|^2.
+\end{equation*}
+In the case where \(X(t) = W(t)\), we can see from equation (\ref{eq:gibbs_dirichlet_form}) that the Poincar\'{e} inequality reduces to a property of the empirical risk \(R\) and the parameter \(\beta\).
+
+We say that \(\mu\) satisfies a logarithmic Sobolev inequality with constant \(c > 0\) if for any suitable real-valued function \(\varphi\) we have
+\begin{equation*}
+    Ent_{\mu}(\varphi^2) \leq 2 c \Bcal{E}(\varphi).
+\end{equation*}
+Similar to the Poincar\'{e} inequality, we can apply the inequality with \(\varphi = \sqrt{P_t \phi}\) where \(\phi > 0\) to obtain exponential convergence in entropy
+\begin{equation*}
+    Ent_{\mu}(P_t \phi) \leq e^{-2t/c} Ent_{\mu}(\phi).
+\end{equation*}
+
+Let \(\nu\) be any measure on \(\Bbb{R}^d\) such that we have absolute continuity \(\nu \ll \mu\) and set \(\varphi = \Brm{d}\nu / \Brm{d}\mu\) to be the Radon-Nikodym derivative. Then the entropy of \(\varphi\) is given by the \textit{relative entropy}
+\begin{equation*}
+    Ent_{\mu}(\varphi) = D(\nu \| \mu) = \int \frac{\Brm{d} \nu}{\Brm{d} \mu} \log{\frac{\Brm{d} \nu}{\Brm{d} \mu}} d\mu.
+\end{equation*}
+Following from this, we state the main convergence result.
+\begin{theorem}
+Suppose \(\Bcal{L}\) is self-adjoint on \(L^2(\mu)\) and \(\mu\) satisfies a logarithmic Sobolev inequality with constant \(c > 0\). Then if \(D(\nu_0 \| \mu) < \infty\) we have exponential convergence in relative entropy: 
+\begin{equation*}
+    D(\nu_t \| \mu) \leq e^{-2t/c} D(\nu_0 \| \mu).
+\end{equation*}
+\end{theorem}
+
+Certainly in the case of \(X(t) = W(t)\) a simple computation reveals that \(\Bcal{L}\) is indeed self-adjoint. This condition is necessary to guarantee that \(P_t (\Brm{d}\nu_0 / \Brm{d}\mu) = \Brm{d}\nu_t / \Brm{d}\mu\).
+\end{appendices}
+
+\end{document}
