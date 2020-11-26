@@ -2,9 +2,11 @@
 
 This is a GitHub page for the reading group on Learning Theory and Statistical Optimization held at the Department of Statistics, University of Oxford.
 
+**Academic organizer:** [Patrick Rebeschini](http://www.stats.ox.ac.uk/~rebeschi/).
+
 ## Organization
 
-We will hold hybrid sessions (as we do with classes), so that people can attend/present remotely. **Priority for the physical presence is reserved to the people presenting in the reading group**. Anyone who is interested to attend in person should let us know beforehand (please email vaskevicius.tomas [at] gmail.com to confirm as we need to make sure we do not exceed the max room capacity).
+We will hold hybrid sessions (as we do with classes), so that people can attend/present remotely. **Priority for the physical presence is reserved to the people presenting in the reading group**. Anyone who is interested to attend in person should let us know beforehand (please email patrick.rebeschini [at] stats.ox.ac.uk to confirm as we need to make sure we do not exceed the max room capacity).
 
 **Where**: Social Area (Ground Floor), Department of Statistics (max room capacity: 14 people).
 
