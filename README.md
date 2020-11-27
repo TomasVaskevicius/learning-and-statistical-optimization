@@ -22,7 +22,7 @@ Week  | Speaker | Title
 5 | Fan Wu | Minimax Rates of Estimation for Sparse PCA in High Dimensions [(paper)](https://arxiv.org/pdf/1202.0786.pdf)
 6 | Carlo Alfano | On the Theory of Policy Gradient Methods: Optimality, Approximation, and Distribution Shift [(paper)](https://arxiv.org/abs/1908.00261)
 7 | Tyler Farghly | A Non-Asymptotic Analysis of Stochastic Gradient Langevin Dynamics [(notes)](https://github.com/TomasVaskevicius/learning-and-statistical-optimization/blob/main/tex/michaelmas/week7/A_Non_Asymptotic_Analysis_of_SGLD.pdf) [(paper)](https://arxiv.org/abs/1702.03849)
-8 | Tomas Vaskevicius | Fast Rates for Sparse Regression [(paper)](https://arxiv.org/pdf/1402.1918.pdf)
+8 | Tomas Vaskevicius | Fast Rates and Sparse Linear Prediction
 
 ## Schedule for Hilary Term
 
