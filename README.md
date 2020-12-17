@@ -32,7 +32,7 @@ Week  | Speaker | Title
 3 | Federico Cantarella |
 4 | Eugenio Clerico |
 5 | Eduard Oravkin |
-6 | David Martinez |
+6 | David Martinez | Accelerating Variance-Reduced Stochastic Gradient Methods [(paper)](https://arxiv.org/abs/1910.09494)
 7 | Riccardo Della Vecchia |
 8 | Jun Yang |
 
