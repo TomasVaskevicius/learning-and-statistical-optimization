@@ -10,7 +10,7 @@ We will hold hybrid sessions (as we do with classes), so that people can attend/
 
 **Where**: Social Area (Ground Floor), Department of Statistics (max room capacity: 14 people).
 
-**When**: Tuesdays, from 15:30 to 17:00, starting from Week 2 until Week 8.
+**When**: Mondays **(note the time change!)**, from 15:30 to 17:00, starting from Week 2 until Week 8.
 
 ## Schedule for Michaelmas Term
 
