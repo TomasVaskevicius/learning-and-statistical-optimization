@@ -34,7 +34,7 @@ Week  | Speaker | Title
 5 | Eduard Oravkin |
 6 | David Martinez | Accelerating Variance-Reduced Stochastic Gradient Methods [(paper)](https://arxiv.org/abs/1910.09494)
 7 | Riccardo Della Vecchia | Mirrorless Mirror Descent: A More Natural Discretization of Riemannian Gradient Flow [(paper)](https://arxiv.org/pdf/2004.01025.pdf)
-8 | Jun Yang |
+8 | Jun Yang | Optimal dimension dependence of the Metropolis-Adjusted Langevin Algorithm [(paper)](https://arxiv.org/abs/2012.12810)
 
 
 ## Instructions for the Speakers
