@@ -33,7 +33,7 @@ Week  | Speaker | Title
 4 | Eugenio Clerico |
 5 | Eduard Oravkin |
 6 | David Martinez | Accelerating Variance-Reduced Stochastic Gradient Methods [(paper)](https://arxiv.org/abs/1910.09494)
-7 | Riccardo Della Vecchia |
+7 | Riccardo Della Vecchia | Mirrorless Mirror Descent: A More Natural Discretization of Riemannian Gradient Flow [(paper)](https://arxiv.org/pdf/2004.01025.pdf)
 8 | Jun Yang |
 
 
