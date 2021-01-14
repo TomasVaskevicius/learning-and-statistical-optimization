@@ -28,7 +28,7 @@ Week  | Speaker | Title
 
 Week  | Speaker | Title
 ----- | ------- | ------
-2 | Amartya Sanyal |
+2 | Amartya Sanyal | Linear Convergence of Gradient and Proximal-Gradient Methods Under the Polyak- Lojasiewicz Condition [(paper)](https://arxiv.org/abs/1608.04636)
 3 | Federico Cantarella |
 4 | Eugenio Clerico |
 5 | Eduard Oravkin |
