@@ -29,9 +29,9 @@ Week  | Speaker | Title
 Week  | Speaker | Title
 ----- | ------- | ------
 2 | Amartya Sanyal | Linear Convergence of Gradient and Proximal-Gradient Methods Under the Polyak- Lojasiewicz Condition [(paper)](https://arxiv.org/abs/1608.04636)
-3 | Federico Cantarella |
-4 | Eugenio Clerico | Some information-theoretic generalization bounds ([paper1](https://arxiv.org/abs/1705.07809), [paper2](https://arxiv.org/abs/1806.03803), [paper3](https://www.researchgate.net/publication/330476152_Generalization_error_bounds_using_Wasserstein_distances))
-5 | Eduard Oravkin |
+3 | - | -
+4 | Eugenio Clerico | Some information-theoretic generalization bounds ([paper 1](https://arxiv.org/abs/1705.07809), [paper 2](https://arxiv.org/abs/1806.03803), [paper 3](https://www.researchgate.net/publication/330476152_Generalization_error_bounds_using_Wasserstein_distances))
+5 | Eduard Oravkin | The Double Descent Phenomenon and Implicit Bias of Mirror Descent ([paper 1](https://arxiv.org/abs/1903.08560), [paper 2](https://arxiv.org/abs/1802.08246))
 6 | David Martinez | Accelerating Variance-Reduced Stochastic Gradient Methods [(paper)](https://arxiv.org/abs/1910.09494)
 7 | Riccardo Della Vecchia | Mirrorless Mirror Descent: A More Natural Discretization of Riemannian Gradient Flow [(paper)](https://arxiv.org/pdf/2004.01025.pdf)
 8 | Jun Yang | Optimal dimension dependence of the Metropolis-Adjusted Langevin Algorithm [(paper)](https://arxiv.org/abs/2012.12810)
