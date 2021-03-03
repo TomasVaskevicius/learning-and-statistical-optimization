@@ -34,7 +34,7 @@ Week  | Speaker | Title
 5 | Eduard Oravkin | The Double Descent Phenomenon and Implicit Bias of Mirror Descent ([paper 1](https://arxiv.org/abs/1903.08560), [paper 2](https://arxiv.org/pdf/2006.10732.pdf))
 6 | David Martinez | Accelerating Variance-Reduced Stochastic Gradient Methods [(paper)](https://arxiv.org/abs/1910.09494)
 7 | --- | ---
-8 | Jun Yang | Optimal dimension dependence of the Metropolis-Adjusted Langevin Algorithm [(paper)](https://arxiv.org/abs/2012.12810)
+8 | Jun Yang | Optimal dimension dependence of the Metropolis-Adjusted Langevin Algorithm [(paper 1)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.399.5634&rep=rep1&type=pdf), [(paper 2)](https://arxiv.org/abs/2012.12810)
 
 
 ## Instructions for the Speakers
